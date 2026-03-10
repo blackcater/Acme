@@ -1,1 +1,1 @@
-export * from './orpc'
+export * from './rpc'

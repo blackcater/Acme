@@ -9,13 +9,16 @@
 .claude/sessions
 .claude/plans
 
-# node_modules
+# node & bun
 node_modules/
 dist/
 out/
 *.log*
 .cache/
 .turbo/
+.env
+.env.*
+!.env.example
 
 # others
 /temp

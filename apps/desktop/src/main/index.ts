@@ -8,7 +8,7 @@ import { RPCHandler } from '@orpc/server/message-port'
 
 import icon from '~/resources/icon.png?asset'
 
-import { router } from './orpc/router'
+import { router } from './router'
 
 // Setup oRPC handler
 const handler = new RPCHandler(router, {

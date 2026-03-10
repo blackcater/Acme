@@ -4,14 +4,14 @@ import { Button } from '@acme/ui/foundation'
 import { ClaudeCode } from '@acme/ui/icons/agent'
 import { Warp } from '@acme/ui/icons/app'
 
-import { orpc } from './utils'
+import { rpc } from './utils'
 
 function App(): React.JSX.Element {
 	const ipcHandle = (): void => window.electron.ipcRenderer.send('ping')
 	const [result, setResult] = useState<string>('')
 
 	const orpcHandle = async (): Promise<void> => {
-		const response = await orpc.ping()
+		const response = await rpc.ping()
 		setResult(response)
 	}
 
