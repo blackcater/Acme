@@ -2,23 +2,35 @@
   <a href="https://acme.blackcater.dev">
     <img src="./assets/acme-app.svg" alt="acme logo" width="128">
   </a>
-  <p align="center">
-    <strong>ACME</strong>
-    <br />
-    <em>Your unified workspace for multi-agent code collaboration</em>
-  </p>
-  <br />
 </p>
 
-Acme is a desktop application for Code Agents, designed as a Codex App alternative with multi-vault project management, multi-agent support, and local-first data storage. It provides a unified workspace for developers to work with multiple code agents in parallel.
+<h1 align="center">ACME</h1>
 
-**Core Features:**
-- Multi-Vault workspace management with local SQLite storage
-- Support for multiple Code Agents (Claude Code, Codex, CodeX, ACP-compatible)
-- MCP (Model Context Protocol) integration
-- Multi-window model with floating thread windows
-- Rich desktop UI with sidebar, thread chat, and tool panels
+<p align="center">
+  <em>Local-first multi-agent collaboration app</em>
+</p>
 
----
+<p align="center">
+  <strong>English</strong> &bull; <a href="./README.zh-CN.md">中文</a>
+</p>
 
-See individual app/package README files for details.
+<p align="center">
+  <a href="https://acme.blackcater.dev">Website</a> &bull;
+  <a href="#features">Features</a> &bull;
+  <a href="#license">License</a>
+</p>
+
+Acme is a desktop application for Code Agents, designed as a Codex App
+alternative with multi-vault project management, multi-agent support,
+and local-first data storage. It provides a unified workspace for
+developers to work with multiple code agents in parallel.
+
+## Features
+
+- Local-first: Store all data locally, no cloud dependencies
+- Multi-agent: Support multiple code agents in parallel (Claude Code,
+  Codex, Acme Code, ACP-compatible)
+
+## License
+
+MIT License
