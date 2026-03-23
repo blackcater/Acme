@@ -1,23 +1,37 @@
 export type AgentEvent =
-  // Agent 生命周期
-  | { type: 'agent_start' }
-  | { type: 'agent_end' }
-  | { type: 'agent_error'; error: string }
-  // Turn 生命周期
-  | { type: 'turn_start' }
-  | { type: 'turn_end' }
-  // 消息生命周期
-  | { type: 'message_start'; message: AgentMessage }
-  | { type: 'message_update'; message: AgentMessage; delta: string }
-  | { type: 'message_end'; message: AgentMessage }
-  // Tool 执行生命周期
-  | { type: 'tool_execution_start'; toolCallId: string; toolName: string; args: unknown }
-  | { type: 'tool_execution_update'; toolCallId: string; partialResult: unknown }
-  | { type: 'tool_execution_end'; toolCallId: string; result: unknown; isError: boolean }
+	// Agent 生命周期
+	| { type: 'agent_start' }
+	| { type: 'agent_end' }
+	| { type: 'agent_error'; error: string }
+	// Turn 生命周期
+	| { type: 'turn_start' }
+	| { type: 'turn_end' }
+	// 消息生命周期
+	| { type: 'message_start'; message: AgentMessage }
+	| { type: 'message_update'; message: AgentMessage; delta: string }
+	| { type: 'message_end'; message: AgentMessage }
+	// Tool 执行生命周期
+	| {
+			type: 'tool_execution_start'
+			toolCallId: string
+			toolName: string
+			args: unknown
+	  }
+	| {
+			type: 'tool_execution_update'
+			toolCallId: string
+			partialResult: unknown
+	  }
+	| {
+			type: 'tool_execution_end'
+			toolCallId: string
+			result: unknown
+			isError: boolean
+	  }
 
 export interface AgentMessage {
-  id: string
-  role: 'user' | 'assistant' | 'system'
-  content: string
-  createdAt: Date
+	id: string
+	role: 'user' | 'assistant' | 'system'
+	content: string
+	createdAt: Date
 }

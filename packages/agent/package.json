@@ -10,6 +10,7 @@
     "test:watch": "bun test --watch"
   },
   "dependencies": {
+    "@acme-ai/core": "workspace:*",
     "@anthropic-ai/claude-agent-sdk": "^0.2.81",
     "@openai/agents": "^0.7.2",
     "zod": "^4.3.6"

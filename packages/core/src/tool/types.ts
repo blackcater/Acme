@@ -29,15 +29,15 @@ export interface ToolResult {
  * Tool 类型定义
  */
 export interface ToolType {
-  name: string
-  description: string
-  inputSchema: Record<string, unknown>
+	name: string
+	description: string
+	inputSchema: Record<string, unknown>
 }
 
 export interface ToolCallType {
-  id: string
-  toolName: string
-  input: Record<string, unknown>
-  output?: string
-  createdAt: Date
+	id: string
+	toolName: string
+	input: Record<string, unknown>
+	output?: string
+	createdAt: Date
 }

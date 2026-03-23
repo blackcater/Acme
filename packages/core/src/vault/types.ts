@@ -21,18 +21,18 @@ export interface VaultSettings {
  * Vault 类型定义
  */
 export interface VaultType {
-  id: string
-  name: string
-  path: string
-  createdAt: Date
-  updatedAt: Date
+	id: string
+	name: string
+	path: string
+	createdAt: Date
+	updatedAt: Date
 }
 
 export interface VaultConfig {
-  skills?: string[]
-  agents?: string[]
-  plugins?: string[]
-  commands?: string[]
-  // 覆盖全局配置
-  [key: string]: unknown
+	skills?: string[]
+	agents?: string[]
+	plugins?: string[]
+	commands?: string[]
+	// 覆盖全局配置
+	[key: string]: unknown
 }
