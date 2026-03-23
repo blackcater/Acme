@@ -45,6 +45,7 @@ export function initVaultHandlers(): void {
 				.map((entry) => entry.name)
 
 			const vaults = []
+			let skippedCount = 0
 			for (const vaultId of vaultIds) {
 				const configPath = getVaultConfigPath(vaultId)
 				if (existsSync(configPath)) {
@@ -53,9 +54,14 @@ export function initVaultHandlers(): void {
 						const vault = VaultSchema.parse(JSON.parse(content))
 						vaults.push(vault)
 					} catch {
+						skippedCount++
 						handlerLog.warn('Failed to read vault config', { vaultId })
 					}
 				}
+			}
+
+			if (skippedCount > 0) {
+				handlerLog.warn('Skipped vault count due to corrupted configs', { skippedCount })
 			}
 
 			return vaultContracts.list.output.parse(vaults)
@@ -108,6 +114,7 @@ export function initVaultHandlers(): void {
 				.map((entry) => entry.name)
 
 			const projects = []
+			let skippedCount = 0
 			for (const projectId of projectIds) {
 				const configPath = getProjectConfigPath(params.vaultId, projectId)
 				if (existsSync(configPath)) {
@@ -116,9 +123,14 @@ export function initVaultHandlers(): void {
 						const project = ProjectSchema.parse(JSON.parse(content))
 						projects.push(project)
 					} catch {
+						skippedCount++
 						handlerLog.warn('Failed to read project config', { projectId })
 					}
 				}
+			}
+
+			if (skippedCount > 0) {
+				handlerLog.warn('Skipped project count due to corrupted configs', { skippedCount })
 			}
 
 			return projectContracts.list.output.parse(projects)

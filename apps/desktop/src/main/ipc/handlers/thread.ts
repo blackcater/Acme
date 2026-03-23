@@ -101,6 +101,12 @@ export function initThreadHandlers(runtime: AgentRuntime): void {
 		const params = messageContracts.send.input.parse(input)
 		handlerLog.debug('message:send called', { params })
 
+		// Verify thread exists before appending message
+		const thread = await runtime.threadStore.get(params.threadId)
+		if (!thread) {
+			throw new Error(`Thread not found: ${params.threadId}`)
+		}
+
 		// Append user message to store
 		const message = await runtime.messageStore.append({
 			threadId: params.threadId,
