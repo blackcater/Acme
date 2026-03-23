@@ -109,7 +109,6 @@ export class CodeAgentProcess extends EventEmitter {
 				}
 			}, 5000)
 
-			this.#running = false
 			return true
 		} catch (error) {
 			log.error('Failed to stop agent process', { agentId: this.agentId, error })

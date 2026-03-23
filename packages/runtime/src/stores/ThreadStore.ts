@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile, unlink, readdir } from 'node:fs/promises'
+import { mkdir, readFile, writeFile, rm, readdir } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { createId } from '@paralleldrive/cuid2'
@@ -110,14 +110,14 @@ export class ThreadStore {
 	}
 
 	async delete(threadId: string): Promise<boolean> {
-		const configPath = this.getConfigPath(threadId)
+		const threadDir = this.getThreadDir(threadId)
 
-		if (!existsSync(configPath)) {
+		if (!existsSync(threadDir)) {
 			return false
 		}
 
 		try {
-			await unlink(configPath)
+			await rm(threadDir, { recursive: true })
 			log.info('Thread deleted', { threadId })
 			return true
 		} catch (error) {
