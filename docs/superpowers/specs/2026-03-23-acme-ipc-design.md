@@ -89,9 +89,9 @@ class MessageChannelRouter {
 }
 ```
 
-### 2. Contracts (Shared Package)
+### 2. Contracts (Desktop Shared)
 
-位置：`packages/shared/src/ipc/contracts.ts`
+位置：`apps/desktop/src/shared/ipc/contracts.ts`
 
 **职责**：
 - 定义所有 IPC channel 的 Zod schemas
@@ -188,12 +188,12 @@ contextBridge.exposeInMainWorld('api', api)
 ## 文件结构
 
 ```
-packages/shared/src/ipc/
-├── index.ts        # 导出 contracts, types
-├── contracts.ts    # Zod schemas 定义
-└── types.ts        # 共享类型定义
-
 apps/desktop/src/
+├── shared/
+│   └── ipc/
+│       ├── index.ts        # 导出 contracts, types
+│       ├── contracts.ts    # Zod schemas 定义
+│       └── types.ts        # 共享类型定义
 ├── main/
 │   ├── index.ts               # 主进程入口，初始化 router
 │   └── ipc/
@@ -385,7 +385,7 @@ interface IAgentRuntimeBridge {
 
 ### Phase 1: IPC 基础设施
 
-1. [ ] 在 `packages/shared/src/ipc/` 创建 contracts 和 types
+1. [ ] 在 `apps/desktop/src/shared/ipc/` 创建 contracts 和 types
 2. [ ] 在 `apps/desktop/src/main/ipc/` 实现 MessageChannelRouter
 3. [ ] 在 `apps/desktop/src/preload/` 实现 api 客户端
 4. [ ] 验证 Renderer ↔ Main 双向通信
