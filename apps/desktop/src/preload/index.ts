@@ -42,6 +42,9 @@ const pendingRequests = new Map<string, { resolve: (value: unknown) => void; rej
 // Subscription handlers map
 const subscriptionHandlers = new Map<string, Set<(data: unknown) => void>>()
 
+// Buffer for messages received before port initialization
+const bufferedMessages: MessageEvent[] = []
+
 /**
  * Generate a unique request ID
  */
@@ -53,6 +56,12 @@ function generateRequestId(): string {
  * Handle incoming messages from the main process
  */
 function handleMessage(event: MessageEvent): void {
+	// If port not yet initialized, buffer the message
+	if (!messagePort) {
+		bufferedMessages.push(event)
+		return
+	}
+
 	const data = event.data as IpcIncomingMessage
 
 	switch (data.type) {
@@ -93,6 +102,12 @@ ipcRenderer.on('ipc-port', (event) => {
 		messagePort = port
 		messagePort.onmessage = handleMessage
 		messagePort.start()
+
+		// Replay buffered messages now that port is initialized
+		for (const bufferedEvent of bufferedMessages) {
+			handleMessage(bufferedEvent)
+		}
+		bufferedMessages.length = 0
 	}
 })
 
