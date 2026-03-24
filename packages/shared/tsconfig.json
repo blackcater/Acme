@@ -1,7 +1,0 @@
-{
-  "extends": "@acme-ai/tsconfig/base.json",
-  "compilerOptions": {
-    "baseUrl": "."
-  },
-  "include": ["./src"]
-}

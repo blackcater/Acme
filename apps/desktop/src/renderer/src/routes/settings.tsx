@@ -1,4 +1,4 @@
-export function SettingsPage(): React.JSX.Element {
+export function SettingsPage() {
 	return (
 		<div>
 			<h1>设置页面</h1>
