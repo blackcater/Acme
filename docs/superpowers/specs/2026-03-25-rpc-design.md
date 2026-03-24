@@ -148,13 +148,13 @@ For Electron multi-window scenarios:
 
 - HTTP POST endpoint `/rpc` for incoming calls
 - SSE endpoint `/rpc/events` for server pushes and streaming responses
-- Manual WebSocket connection management (user provides the connection)
+- HTTP is used for request-response; SSE is used for server-to-client streaming
 
 ## Testing Strategy (TDD)
 
 1. Write interface tests first
-2. Implement `ElectronRpcServer` and `ElectronRpcClient` with mock IPC
-3. Implement `HttpRpcServer` and `HttpRpcClient` with mock HTTP/SSE
+2. Implement `RpcServer` and `RpcClient` with `ElectronIpcTransport` using mock IPC
+3. Implement `RpcServer` and `RpcClient` with `HttpRpcTransport` using mock HTTP/SSE
 4. All tests run with `bun test`
 
 ## Usage Examples
