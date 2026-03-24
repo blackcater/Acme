@@ -4,7 +4,7 @@ import { HttpRpcClient } from './HttpRpcClient'
 
 // Mock fetch
 const mockFetch = vi.fn()
-global.fetch = mockFetch
+global.fetch = mockFetch as unknown as typeof fetch
 
 describe('HttpRpcClient', () => {
 	beforeEach(() => {

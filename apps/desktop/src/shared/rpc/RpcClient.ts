@@ -9,7 +9,7 @@ export abstract class RpcClient {
 
   abstract call(method: string, args: unknown): Promise<unknown>
 
-  abstract stream(method: string, args: unknown): AsyncIterator
+  abstract stream(method: string, args: unknown): AsyncIterator<unknown, unknown, unknown>
 
   abstract onEvent(listener: (event: string, ...args: unknown[]) => void): void
 

@@ -6,7 +6,7 @@ import { RpcServer } from './RpcServer'
 class MockRpcServer extends RpcServer {
 	handle(
 		_event: string,
-		_handler: (args: unknown) => unknown | AsyncIterator
+		_handler: (args: unknown) => unknown | AsyncIterator<unknown, unknown, unknown>
 	): void {
 		throw new Error('Not implemented')
 	}
@@ -32,6 +32,7 @@ class MockRpcServer extends RpcServer {
 
 describe('RpcServer', () => {
 	it('should be abstract and not be instantiable directly', () => {
+		// @ts-expect-error - Abstract class cannot be instantiated
 		expect(() => new RpcServer()).toThrow()
 	})
 

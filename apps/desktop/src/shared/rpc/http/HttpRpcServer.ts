@@ -9,7 +9,7 @@ interface ServerOptions {
   hostname?: string
 }
 
-type Handler = (args: unknown) => unknown | AsyncIterator
+type Handler = (args: unknown) => unknown | AsyncIterator<unknown, unknown, unknown>
 
 export class HttpRpcServer extends RpcServer {
   private handlers = new Map<string, Handler>()
@@ -60,7 +60,7 @@ export class HttpRpcServer extends RpcServer {
     req: IncomingMessage,
     res: ServerResponse
   ): Promise<void> {
-    const url = new URL(req.url, `http://${req.headers.host}`)
+    const url = new URL(req.url ?? '/', `http://${req.headers.host}`)
 
     if (req.method === 'POST' && url.pathname === '/rpc') {
       await this.handleRpcCall(req, res)
@@ -83,7 +83,7 @@ export class HttpRpcServer extends RpcServer {
       request = JSON.parse(body)
     } catch {
       res.writeHead(400)
-      res.end(JSON.stringify({ error: { code: 'INVALID_REQUEST', message: 'Invalid JSON' } }))
+      res.end(JSON.stringify({ error: new RpcError('INVALID_REQUEST', 'Invalid JSON').toJSON() }))
       return
     }
 
@@ -91,7 +91,7 @@ export class HttpRpcServer extends RpcServer {
     if (!handler) {
       const response: RpcResponse = {
         id: request.id,
-        error: { code: 'NOT_FOUND', message: `Method ${request.method} not found` },
+        error: new RpcError('NOT_FOUND', `Method ${request.method} not found`).toJSON() as unknown as import('../RpcError').RpcError,
       }
       res.writeHead(200, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify(response))
@@ -104,8 +104,7 @@ export class HttpRpcServer extends RpcServer {
       if (result && typeof result === 'object' && Symbol.asyncIterator in result) {
         // Streaming response via SSE
         res.writeHead(200)
-        const iterator = result as AsyncIterator<unknown>
-        for await (const chunk of iterator) {
+        for await (const chunk of result as AsyncIterable<unknown>) {
           res.write(`data: ${JSON.stringify({ id: request.id, chunk, done: false })}\n\n`)
         }
         res.write(`data: ${JSON.stringify({ id: request.id, chunk: null, done: true })}\n\n`)
@@ -117,14 +116,14 @@ export class HttpRpcServer extends RpcServer {
       }
     } catch (err) {
       const error = RpcError.from(err)
-      const response: RpcResponse = { id: request.id, error: error.toJSON() }
+      const response: RpcResponse = { id: request.id, error: error.toJSON() as unknown as import('../RpcError').RpcError }
       res.writeHead(200, { 'Content-Type': 'application/json' })
       res.end(JSON.stringify(response))
     }
   }
 
   private async handleSSE(req: IncomingMessage, res: ServerResponse): Promise<void> {
-    const groupId = new URL(req.url, `http://${req.headers.host}`).searchParams.get('groupId')
+    const groupId = new URL(req.url ?? '/', `http://${req.headers.host}`).searchParams.get('groupId')
 
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',

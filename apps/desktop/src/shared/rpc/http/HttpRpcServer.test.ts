@@ -1,4 +1,4 @@
-import { describe, expect, it, vi, beforeEach } from 'bun:test'
+import { describe, expect, it } from 'bun:test'
 import { HttpRpcServer } from './HttpRpcServer'
 
 describe('HttpRpcServer', () => {

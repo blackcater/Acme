@@ -60,7 +60,7 @@ export class HttpRpcClient extends RpcClient {
 			},
 		}
 
-		return chunks as AsyncIterator<unknown, unknown, unknown>
+		return chunks[Symbol.asyncIterator]() as AsyncIterator<unknown, unknown, unknown>
 	}
 
 	onEvent(listener: (event: string, ...args: unknown[]) => void): void {

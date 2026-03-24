@@ -12,7 +12,7 @@ export abstract class RpcServer {
 
 	abstract handle(
 		event: string,
-		handler: (args: unknown) => unknown | AsyncIterator
+		handler: (args: unknown) => unknown | AsyncIterator<unknown, unknown, unknown>
 	): void
 
 	abstract push(event: string, target: Target, ...args: unknown[]): void
