@@ -11,7 +11,9 @@ export class HttpRpcClient implements RpcClient {
     constructor(baseUrl: string, clientId?: string, groupId?: string) {
         this.baseUrl = baseUrl.replace(/\/$/, '')
         this.clientId = clientId || `http-client-${Date.now()}`
-        this.groupId = groupId
+        if (groupId !== undefined) {
+            this.groupId = groupId
+        }
     }
 
     async call<T>(event: string, ...args: unknown[]): Promise<T> {
@@ -40,7 +42,7 @@ export class HttpRpcClient implements RpcClient {
         return payload.result as T
     }
 
-    stream<T>(event: string, ...args: unknown[]): Rpc.StreamResult<T> {
+    stream<T>(_event: string, ..._args: unknown[]): Rpc.StreamResult<T> {
         // HTTP streaming deferred - would use fetch with ReadableStream
         // For now, return an empty async iterator
         const chunks: T[] = []
@@ -62,7 +64,7 @@ export class HttpRpcClient implements RpcClient {
         }
     }
 
-    onEvent(event: string, listener: (...args: unknown[]) => void): Rpc.CancelFn {
+    onEvent(_event: string, _listener: (...args: unknown[]) => void): Rpc.CancelFn {
         // HTTP long-polling or SSE for events - deferred
         return () => {}
     }

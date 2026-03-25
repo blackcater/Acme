@@ -15,10 +15,12 @@ export class ElectronRpcClient implements RpcClient {
     constructor(webContents: WebContents, groupId?: string) {
         this.webContents = webContents
         this.clientId = `client-${webContents.id}`
-        this.groupId = groupId
+        if (groupId !== undefined) {
+            this.groupId = groupId
+        }
 
         // Listen for RPC responses
-        webContents.on('ipc-message', (channel: string, ...args: unknown[]) => {
+        webContents.on('ipc-message' as any, ((channel: string, ...args: unknown[]) => {
             if (channel.startsWith('rpc:response:')) {
                 const invokeId = channel.replace('rpc:response:', '')
                 const pending = this.pendingCalls.get(invokeId)
@@ -53,7 +55,7 @@ export class ElectronRpcClient implements RpcClient {
                     }
                 }
             }
-        })
+        }) as any)
     }
 
     async call<T>(event: string, ...args: unknown[]): Promise<T> {
@@ -142,14 +144,14 @@ export class ElectronRpcClient implements RpcClient {
 
         if (!this.eventListeners.has(event)) {
             this.eventListeners.set(event, new Set())
-            this.webContents.on(channel, (...listenerArgs: unknown[]) => {
+            this.webContents.on(channel as any, ((...listenerArgs: unknown[]) => {
                 const listeners = this.eventListeners.get(event)
                 if (listeners) {
                     for (const l of listeners) {
                         l(...listenerArgs)
                     }
                 }
-            })
+            }) as any)
         }
 
         this.eventListeners.get(event)!.add(listener)
