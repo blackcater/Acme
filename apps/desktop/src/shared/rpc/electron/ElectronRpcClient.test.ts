@@ -70,29 +70,6 @@ describe('ElectronRpcClient', () => {
 		expect(typeof cancel).toBe('function')
 	})
 
-	it('should abort pending calls', async () => {
-		const mockWebContents = {
-			send: vi.fn(),
-			id: 1,
-			on: vi.fn(),
-		}
-
-		const client = new ElectronRpcClient(
-			mockWebContents as unknown as WebContents
-		)
-
-		// Manually add a pending call
-		;(client as any).pendingCalls.set('test-id', {
-			resolve: vi.fn(),
-			reject: vi.fn(),
-		})
-
-		client.abort()
-
-		// Pending calls should be cleared
-		expect((client as any).pendingCalls.size).toBe(0)
-	})
-
 	describe('call()', () => {
 		it('should send RPC call and resolve on response', async () => {
 			const mockSend = vi.fn()

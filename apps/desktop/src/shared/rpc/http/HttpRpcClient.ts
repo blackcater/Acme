@@ -5,28 +5,32 @@ export class HttpRpcClient implements RpcClient {
 	readonly clientId: string
 	readonly groupId?: string
 
-	private baseUrl: string
+	private readonly _baseUrl: string
 
 	constructor(baseUrl: string, clientId?: string, groupId?: string) {
-		this.baseUrl = baseUrl.replace(/\/$/, '')
+		this._baseUrl = baseUrl.replace(/\/$/, '')
 		this.clientId = clientId || `http-client-${Date.now()}`
+
 		if (groupId !== undefined) {
 			this.groupId = groupId
 		}
 	}
 
 	async call<T>(event: string, ...args: unknown[]): Promise<T> {
-		const normalizedEvent = event.replace(/^\/|\/$/g, '')
+		const normalizedEvent = event.replaceAll(/^\/|\/$/g, '')
 
-		const response = await fetch(`${this.baseUrl}/rpc/${normalizedEvent}`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'x-rpc-client-id': this.clientId,
-				...(this.groupId && { 'x-rpc-group-id': this.groupId }),
-			},
-			body: JSON.stringify(args),
-		})
+		const response = await fetch(
+			`${this._baseUrl}/rpc/${normalizedEvent}`,
+			{
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'x-rpc-client-id': this.clientId,
+					...(this.groupId && { 'x-rpc-group-id': this.groupId }),
+				},
+				body: JSON.stringify(args),
+			}
+		)
 
 		if (!response.ok) {
 			throw new RpcError(

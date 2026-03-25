@@ -10,7 +10,7 @@ interface RegisteredHandler {
 }
 
 export class HttpRpcServer implements RpcServer {
-	private readonly handlers = new Map<string, RegisteredHandler>()
+	private readonly _handlers = new Map<string, RegisteredHandler>()
 
 	constructor(private readonly app: Hono) {
 		this._setupRoutes()
@@ -25,7 +25,7 @@ export class HttpRpcServer implements RpcServer {
 			const path = rpcIndex >= 0 ? fullPath.slice(rpcIndex + 5) : fullPath
 			const args = await c.req.json().catch(() => [])
 
-			const handler = this.handlers.get(path)
+			const handler = this._handlers.get(path)
 			if (!handler) {
 				return c.json(
 					{
@@ -55,13 +55,13 @@ export class HttpRpcServer implements RpcServer {
 					for await (const chunk of result as unknown as AsyncIterable<unknown>) {
 						chunks.push(chunk)
 					}
-					return c.json(chunks)
+					return c.json({ result: chunks })
 				}
 
-				return c.json(result)
+				return c.json({ result })
 			} catch (err) {
 				const rpcError = RpcError.from(err)
-				return c.json(rpcError.toJSON(), 500)
+				return c.json({ error: rpcError.toJSON() }, 500)
 			}
 		})
 	}
@@ -84,9 +84,9 @@ export class HttpRpcServer implements RpcServer {
 	): void {
 		const eventPath = this._normalizeEvent(event)
 		if (typeof optionsOrHandler === 'function') {
-			this.handlers.set(eventPath, { handler: optionsOrHandler })
+			this._handlers.set(eventPath, { handler: optionsOrHandler })
 		} else {
-			this.handlers.set(eventPath, {
+			this._handlers.set(eventPath, {
 				handler: maybeHandler!,
 				options: optionsOrHandler,
 			})

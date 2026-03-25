@@ -12,8 +12,8 @@ export interface WebContentsManager {
 
 export class ElectronRpcServer implements RpcServer {
 	constructor(
-		private readonly ipcMain: IpcMain,
-		private readonly webContentsManager: WebContentsManager
+		private readonly _webContentsManager: WebContentsManager,
+		private readonly _ipcMain: IpcMain
 	) {}
 
 	router(namespace: string): RpcRouter {
@@ -39,7 +39,7 @@ export class ElectronRpcServer implements RpcServer {
 				: maybeHandler!
 
 		// Listen on invoke:xxx channel for client calls
-		this.ipcMain.on(
+		this._ipcMain.on(
 			`rpc:invoke:${eventPath}`,
 			async (e, payload: { invokeId: string; args: unknown[] }) => {
 				const { invokeId, args } = payload
@@ -55,15 +55,8 @@ export class ElectronRpcServer implements RpcServer {
 						]
 						if (typeof asyncIterator === 'function') {
 							const iterator = asyncIterator.call(result)
-							let cancel = false
-
-							// Store cancel function on the event for abort
-							;(e as any)._rpcCancel = () => {
-								cancel = true
-							}
 
 							for await (const chunk of iterator) {
-								if (cancel) break
 								// Send streaming chunk back
 								e.sender.send(
 									`rpc:stream:${eventPath}:${invokeId}`,
@@ -95,15 +88,19 @@ export class ElectronRpcServer implements RpcServer {
 		const eventPath = this._normalizeEvent(event)
 
 		if (target.type === 'broadcast') {
-			this.webContentsManager.send('*', `rpc:event:${eventPath}`, ...args)
+			this._webContentsManager.send(
+				'*',
+				`rpc:event:${eventPath}`,
+				...args
+			)
 		} else if (target.type === 'client' && target.clientId) {
-			this.webContentsManager.send(
+			this._webContentsManager.send(
 				target.clientId,
 				`rpc:event:${eventPath}`,
 				...args
 			)
 		} else if (target.type === 'group' && target.groupId) {
-			this.webContentsManager.send(
+			this._webContentsManager.send(
 				`group:${target.groupId}`,
 				`rpc:event:${eventPath}`,
 				...args
