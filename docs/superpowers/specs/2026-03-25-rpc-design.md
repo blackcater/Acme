@@ -2,138 +2,322 @@
 
 ## Overview
 
-A unified RPC framework for desktop applications with two transport implementations:
-- **Electron IPC** - For communication between main and renderer processes
-- **HTTP + SSE** - For communication between processes on different machines
+A unified RPC framework for desktop applications with support for:
+- **Electron IPC** - Communication between main and renderer processes
+- **HTTP + SSE** - Communication between processes on different machines
 
 ## Directory Structure
 
 ```
-desktop/src/shared/rpc/
-├── types.ts           # Core type definitions
-├── RpcError.ts       # Unified error structure
-├── RpcServer.ts      # Server class (abstract)
-├── RpcClient.ts      # Client class (abstract)
-├── electron/         # Electron IPC implementation
+apps/desktop/src/shared/rpc/
+├── types.ts              # Core type definitions
+├── errors.ts             # Unified error structure + built-in error codes
+├── RpcError.ts          # RpcError class
+├── context.ts            # RequestContext + CancelToken + schema validation
+├── electron/             # Electron IPC implementation
 │   ├── ElectronRpcServer.ts
 │   └── ElectronRpcClient.ts
-└── http/            # HTTP + SSE implementation
-    ├── HttpRpcServer.ts
-    └── HttpRpcClient.ts
+├── http/                 # HTTP + SSE implementation
+│   ├── HttpRpcServer.ts
+│   └── HttpRpcClient.ts
+├── utils.ts              # Utility functions
+└── index.ts              # Unified exports
 ```
 
-## Core Interfaces
-
-### RpcServer
+## Core Types (types.ts)
 
 ```typescript
-abstract class RpcServer {
-  // Register event handler (supports sync and streaming responses)
-  abstract handle(event: string, handler: (args: unknown) => unknown | AsyncIterator): void
+import type { StandardSchemaV1 } from '@standard-schema/spec'
 
-  // Push event to clients
-  abstract push(event: string, target: Target, ...args: unknown[]): void
+export interface IRpcErrorDefinition<Data = unknown> {
+  readonly code: string
+  readonly message: string
+  readonly data?: Data
+}
 
-  // Listen for client events
-  abstract onEvent(listener: (client: RpcClient, event: string, ...args: unknown[]) => void): void
+export namespace Rpc {
+  export type HandlerFn<T = unknown> = (
+    ctx: RequestContext,
+    ...args: unknown[]
+  ) => T | Promise<T> | AsyncIterator<T>
+
+  export type CancelFn = () => void
+
+  export type Target =
+    | { type: 'broadcast' }
+    | { type: 'group'; groupId: string }
+    | { type: 'client'; clientId: string }
+
+  export interface RequestContext {
+    readonly clientId: string
+    readonly vaultId?: string
+    readonly cancelToken: CancelToken
+    readonly [key: string]: unknown
+  }
+
+  export interface CancelToken {
+    readonly aborted: boolean
+    readonly signal: AbortSignal
+    abort(): void
+  }
+}
+
+export interface HandleOptions {
+  schema?: StandardSchemaV1
+}
+
+export interface RpcServer {
+  handle(event: string, handler: Rpc.HandlerFn): void
+  handle(event: string, options: HandleOptions, handler: Rpc.HandlerFn): void
+
+  router(namespace: string): RpcRouter
+  push(event: string, target: Rpc.Target, ...args: unknown[]): void
+}
+
+export interface RpcRouter {
+  handle(event: string, handler: Rpc.HandlerFn): void
+  handle(event: string, options: HandleOptions, handler: Rpc.HandlerFn): void
+
+  router(namespace: string): RpcRouter
+}
+
+export interface RpcClient {
+  readonly clientId: string
+  readonly groupId?: string
+
+  call<T>(event: string, ...args: unknown[]): Promise<T>
+  stream<T>(event: string, ...args: unknown[]): Rpc.StreamResult<T>
+  onEvent(event: string, listener: (...args: unknown[]) => void): Rpc.CancelFn
+  abort(): void
+}
+
+export namespace Rpc {
+  export type StreamResult<T> = {
+    [Symbol.asyncIterator](): AsyncIterator<T>
+    cancel(): void
+  }
 }
 ```
 
-### RpcClient
+## Error Handling (errors.ts)
 
 ```typescript
-abstract class RpcClient {
-  abstract readonly groupId: string
+export class RpcError extends Error {
+  constructor(
+    public readonly code: string,
+    message: string,
+    public readonly data?: unknown
+  ) {
+    super(message)
+    this.name = 'RpcError'
+  }
 
-  // Request-response call
-  abstract call(method: string, args: unknown): Promise<unknown>
+  toJSON(): IRpcErrorDefinition {
+    return {
+      code: this.code,
+      message: this.message,
+      data: this.data,
+    }
+  }
 
-  // Streaming call (returns AsyncIterator)
-  abstract stream(method: string, args: unknown): AsyncIterator
+  static from(error: unknown): RpcError {
+    if (error instanceof RpcError) return error
+    if (error instanceof Error) {
+      return new RpcError(RpcError.INTERNAL_ERROR, error.message)
+    }
+    return new RpcError(RpcError.UNKNOWN_ERROR, String(error))
+  }
+}
 
-  // Listen for server pushes
-  abstract onEvent(listener: (event: string, ...args: unknown[]) => void): void
+export namespace RpcError {
+  export const INTERNAL_ERROR = 'INTERNAL_ERROR'
+  export const UNKNOWN_ERROR = 'UNKNOWN_ERROR'
+  export const NOT_FOUND = 'NOT_FOUND'
+  export const INVALID_PARAMS = 'INVALID_PARAMS'
+  export const ABORTED = 'ABORTED'
+  export const TIMEOUT = 'TIMEOUT'
+  export const UNAUTHORIZED = 'UNAUTHORIZED'
+  export const FORBIDDEN = 'FORBIDDEN'
 }
 ```
 
-### Target
+## Context & Validation (context.ts)
 
 ```typescript
-type Target =
-  | { type: 'broadcast' }              // Push to all connected clients
-  | { type: 'group'; groupId: string } // Push to clients in the same group
-```
+import type { StandardSchemaV1 } from '@standard-schema/spec'
+import { RpcError } from './RpcError'
 
-### RpcError
+export function createCancelToken(): CancelToken {
+  let aborted = false
+  let abortFn: (() => void) | null = null
 
-```typescript
-interface RpcError {
-  code: string      // Error code, e.g., 'NOT_FOUND', 'INTERNAL_ERROR'
-  message: string    // Human-readable message
-  data?: unknown     // Optional additional data
+  const signal = new AbortSignalPrototype((onAbort) => {
+    abortFn = onAbort
+  })
+
+  return {
+    get aborted() { return aborted },
+    get signal() { return signal },
+    abort() {
+      if (aborted) return
+      aborted = true
+      abortFn?.()
+    },
+  }
+}
+
+export function validateArgs(
+  schema: StandardSchemaV1 | undefined,
+  args: unknown[]
+): { validatedArgs: unknown[] } {
+  if (!schema) {
+    return { validatedArgs: args }
+  }
+
+  const input = args.length === 1 ? args[0] : args
+  const result = schema['~standard'].validate(input)
+
+  if ('issues' in result) {
+    throw new RpcError(
+      RpcError.INVALID_PARAMS,
+      'Invalid parameters',
+      result.issues.map((i) => i.message)
+    )
+  }
+
+  return {
+    validatedArgs: Array.isArray(result.value) ? result.value : [result.value],
+  }
 }
 ```
 
 ## Design Decisions
 
-### 1. Unified Error Structure
+### 1. Schema Validation with Standard Schema
 
-Electron IPC does not automatically propagate errors across process boundaries. Therefore, the framework defines a unified `RpcError` structure that all transports must use to serialize and transmit errors back to the client.
+Uses [Standard Schema](https://standardschema.dev/schema) for validation, allowing users to pass any schema library that implements the interface (Zod, Valibot, etc.).
 
-### 2. Separate Implementation Classes
+### 2. Flat Registration + Nested Routes
 
-Each transport has its own concrete `RpcServer` and `RpcClient` implementation:
-
+Handlers can be registered with namespace prefixes:
 ```typescript
-// Electron scenario
-const server = new ElectronRpcServer()
-const client = new ElectronRpcClient({ groupId: 'agents' })
-
-// HTTP scenario
-const server = new HttpRpcServer({ port: 4096 })
-const client = new HttpRpcClient({ url: 'http://localhost:4096', groupId: 'agents' })
+server.handle('conversation:create', handler)
 ```
 
-### 3. Streaming with AsyncIterator
-
-For streaming responses, server handlers return an `AsyncIterator`. This is the modern JavaScript standard for streaming and works well in both Node.js and browser environments.
-
-Server:
+Or using nested routers:
 ```typescript
-server.handle('streamOutput', async function* (args) {
-  while (hasData) {
-    yield { chunk: data }
-    await delay(100)
+const convRouter = server.router('conversation')
+convRouter.handle('create', handler)
+convRouter.handle('send', handler)
+```
+
+### 3. Complete Cancel System
+
+Both `call()` and `stream()` support cancellation:
+- Handler receives `CancelToken` in `RequestContext`
+- Handler can check `ctx.cancelToken.aborted` for graceful exit
+- `stream()` returns `StreamResult` with `cancel()` method
+
+### 4. Separate Streaming and Push
+
+- `stream()` - For client-initiated streaming requests
+- `push()` - For server-initiated notifications to clients
+
+### 5. Target Types
+
+- `broadcast` - Push to all connected clients
+- `group` - Push to clients in the same group
+- `client` - Push to a specific client
+
+## Usage Examples
+
+### Electron Main Process
+
+```typescript
+import { z } from 'zod'
+
+const server = new ElectronRpcServer()
+
+// No validation
+server.handle('getStatus', async (ctx) => {
+  return { status: 'ok' }
+})
+
+// With schema validation
+server.handle('create', { schema: z.object({
+  type: z.enum(['gemini', 'codex']),
+  model: z.string(),
+})}, async (ctx, ...args) => {
+  if (ctx.cancelToken.aborted) return
+  // args[0] is validated
+})
+
+// Nested router
+const convRouter = server.router('conversation')
+convRouter.handle('send', async (ctx, ...args) => {
+  // ...
+})
+
+// Push to clients
+server.push('notification', { type: 'broadcast' }, { msg: 'hello' })
+server.push('update', { type: 'group', groupId: 'agents' }, { data: 123 })
+```
+
+### Electron Renderer Process
+
+```typescript
+const client = new ElectronRpcClient({ groupId: 'renderer' })
+
+// Request-response
+const result = await client.call('getStatus')
+
+// Streaming with cancel
+const stream = client.stream('conversation:send', { message: 'hello' })
+for await (const chunk of stream) {
+  console.log(chunk)
+  if (someCondition) {
+    stream.cancel()
+    break
+  }
+}
+
+// Subscribe to server push
+const cancelFn = client.onEvent('notification', (...args) => {
+  console.log('Received:', ...args)
+})
+cancelFn()
+
+// Abort all operations
+client.abort()
+```
+
+### HTTP + SSE Server
+
+```typescript
+const server = new HttpRpcServer({ port: 4096 })
+
+server.handle('getInfo', async (ctx) => {
+  return { version: '1.0.0' }
+})
+
+server.handle('streamLogs', { schema: z.object({ taskId: z.string() }) }, async function* (ctx, ...args) {
+  for await (const log of logStream) {
+    if (ctx.cancelToken.aborted) return
+    yield { log }
   }
 })
 ```
 
-Client:
-```typescript
-for await (const chunk of client.stream('streamOutput', { taskId })) {
-  console.log(chunk)
-}
-```
-
-### 4. Separate HTTP and SSE
-
-- **HTTP POST** - For request-response calls (`call`)
-- **SSE (Server-Sent Events)** - For server-to-client pushes (`push`) and streaming responses (`stream`)
-- **WebSocket** - Not used; SSE is sufficient for unidirectional streaming
-
-### 5. Client Identity via groupId
-
-Clients identify themselves by `groupId` during construction. This allows the server to route pushes to specific groups without requiring explicit window IDs.
+### HTTP + SSE Client
 
 ```typescript
-const client = new ElectronRpcClient({ groupId: 'agents' })
+const client = new HttpRpcClient({
+  url: 'http://192.168.1.100:4096',
+  groupId: 'remote-agent'
+})
+
+const result = await client.call('getInfo', {})
 ```
-
-### 6. Multi-Window Support
-
-For Electron multi-window scenarios:
-- **Broadcast** - `push(event, { type: 'broadcast' }, ...args)` notifies all windows
-- **Group multicast** - `push(event, { type: 'group', groupId: 'agents' }, ...args)` notifies windows in the same group
 
 ## Implementation Details
 
@@ -147,68 +331,21 @@ For Electron multi-window scenarios:
 
 - HTTP POST endpoint `/rpc` for incoming calls
 - SSE endpoint `/rpc/events` for server pushes and streaming responses
-- HTTP is used for request-response; SSE is used for server-to-client streaming
+- HTTP for request-response; SSE for server-to-client streaming
 
-## Testing Strategy (TDD)
+## Extensibility
 
-1. Write interface tests against `RpcServer` and `RpcClient` abstract classes
-2. Implement `ElectronRpcServer` and `ElectronRpcClient` with mock IPC
-3. Implement `HttpRpcServer` and `HttpRpcClient` with mock HTTP/SSE
-4. All tests run with `bun test`
+### RequestContext Extensions
 
-## Usage Examples
-
-### Electron Main Process
+The `RequestContext` interface supports extension via the index signature:
 
 ```typescript
-const server = new ElectronRpcServer()
-
-server.handle('getStatus', async () => {
-  return { status: 'ok' }
-})
-
-server.handle('streamLogs', async function* (args) {
-  for await (const log of logStream) {
-    yield { log }
-  }
-})
-
-server.onEvent((client, event, ...args) => {
-  console.log('Client event:', event, args)
-})
+// Future examples:
+ctx.userId    // For authentication
+ctx.workspace  // For multi-workspace support
+ctx.sessionId  // For session tracking
 ```
 
-### Electron Renderer Process
+### Custom Target Types
 
-```typescript
-const client = new ElectronRpcClient({ groupId: 'renderer' })
-
-const status = await client.call('getStatus', {})
-console.log(status) // { status: 'ok' }
-
-for await (const { log } of client.stream('streamLogs', {})) {
-  console.log(log)
-}
-
-client.onEvent((event, ...args) => {
-  console.log('Server push:', event, args)
-})
-```
-
-### Cross-Machine HTTP Server
-
-```typescript
-const server = new HttpRpcServer({ port: 4096 })
-
-server.handle('getInfo', async () => {
-  return { version: '1.0.0' }
-})
-```
-
-### Cross-Machine HTTP Client
-
-```typescript
-const client = new HttpRpcClient({ url: 'http://192.168.1.100:4096', groupId: 'remote-agent' })
-
-const result = await client.call('getInfo', {})
-```
+New target types can be added by extending the `Target` union type.
