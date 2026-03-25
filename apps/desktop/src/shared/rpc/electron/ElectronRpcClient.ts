@@ -9,7 +9,7 @@ export class ElectronRpcClient implements RpcClient {
     private webContents: WebContents
     private pendingCalls = new Map<string, { resolve: Function; reject: Function }>()
     private eventListeners = new Map<string, Set<(...args: unknown[]) => void>>()
-    private streamHandlers = new Map<string, { onChunk: Function; onDone: Function }>()
+    private streamHandlers = new Map<string, { onChunk: Function; onDone: Function; cancel: Function }>()
     private invokeCounter = 0
 
     constructor(webContents: WebContents, groupId?: string) {
@@ -80,7 +80,11 @@ export class ElectronRpcClient implements RpcClient {
         const invokeId = `invoke-${++this.invokeCounter}`
         const eventPath = event.replace(/^\/|\/$/g, '')
         const chunks: T[] = []
-        let cancelFn: (() => void) | null = null
+
+        // Send cancel message to server
+        const cancelStream = () => {
+            this.webContents.send(`rpc:cancel:${eventPath}:${invokeId}`)
+        }
 
         // Set up stream handlers before sending
         this.streamHandlers.set(invokeId, {
@@ -90,6 +94,7 @@ export class ElectronRpcClient implements RpcClient {
             onDone: () => {
                 this.streamHandlers.delete(invokeId)
             },
+            cancel: cancelStream,
         })
 
         // Send invoke message
@@ -123,9 +128,11 @@ export class ElectronRpcClient implements RpcClient {
         return {
             [Symbol.asyncIterator]: () => iterator,
             cancel: () => {
-                if (cancelFn) cancelFn()
+                const handler = this.streamHandlers.get(invokeId)
+                if (handler?.cancel) {
+                    handler.cancel()
+                }
                 this.streamHandlers.delete(invokeId)
-                // TODO: Send cancel message to server
             },
         }
     }
@@ -157,7 +164,7 @@ export class ElectronRpcClient implements RpcClient {
 
     abort(): void {
         // Cancel all pending calls
-        for (const [id, pending] of this.pendingCalls) {
+        for (const [, pending] of this.pendingCalls) {
             pending.reject(new RpcError(RpcError.ABORTED, 'Aborted'))
         }
         this.pendingCalls.clear()
