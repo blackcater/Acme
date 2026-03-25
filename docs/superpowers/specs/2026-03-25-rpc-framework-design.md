@@ -83,12 +83,22 @@ export namespace Rpc {
 ### 2.4 错误处理
 
 ```typescript
+export interface IRpcErrorDefinition<Data = unknown> {
+    readonly code: string
+    readonly message: string
+    readonly data?: Data
+}
+
 export class RpcError extends Error {
     constructor(
         public readonly code: string,
         message: string,
         public readonly data?: unknown
     ) { ... }
+
+    toJSON(): IRpcErrorDefinition { ... }
+    static from(error: unknown): RpcError { ... }
+    static fromJSON(json: IRpcErrorDefinition): RpcError { ... }
 
     static INTERNAL_ERROR = 'INTERNAL_ERROR'
     static UNKNOWN_ERROR = 'UNKNOWN_ERROR'
@@ -100,6 +110,20 @@ export class RpcError extends Error {
     static FORBIDDEN = 'FORBIDDEN'
 }
 ```
+
+### 2.5 RpcRouter
+
+命名空间路由接口，与 RpcServer 的 handle 方法签名保持一致：
+
+```typescript
+export interface RpcRouter {
+    handle(event: string, handler: Rpc.HandlerFn): void
+    handle(event: string, options: HandleOptions, handler: Rpc.HandlerFn): void
+    router(namespace: string): RpcRouter
+}
+```
+
+**注意**：命名空间路由与 flat handler 不允许冲突。当 `server.handle('foo', handler)` 注册后，不允许再 `server.router('foo').handle(...)`，反之亦然。
 
 ## 3. 目录结构
 
@@ -258,6 +282,9 @@ const result = await client.call('filesystem.read', '/path/to/file')
 2. **认证机制**：跨设备通信的认证暂不设计
 3. **多窗口 Session 管理**：窗口与 clientId 的映射关系由应用层决定
 4. **流式传输实现**：HTTP 下流式响应使用 SSE 或 chunked transfer
+5. **客户端生命周期**：连接/断开感知、断线重连机制（第一期暂不实现）
+6. **背压机制**：流式响应中客户端消费慢于服务端产生速度的处理（第一期暂不实现）
+7. **超时机制**：请求级别超时的配置方式（第一期使用默认超时）
 
 ## 8. 参考竞品
 
