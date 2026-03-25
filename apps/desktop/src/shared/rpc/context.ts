@@ -2,7 +2,7 @@ import type { StandardSchemaV1 } from '@standard-schema/spec'
 import { RpcError } from './RpcError'
 
 class AbortSignalCarrier {
-  listeners: Array<() => void> = []
+  private listeners: Array<() => void> = []
 
   onabort(fn: () => void): void {
     this.listeners.push(fn)
@@ -24,7 +24,7 @@ export function createCancelToken(): CancelToken {
       if (aborted) {
         fn()
       } else {
-        carrier.listeners.push(fn)
+        carrier.onabort(fn)
       }
     },
   }
