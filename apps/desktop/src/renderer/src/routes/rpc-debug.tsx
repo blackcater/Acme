@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { RpcError } from '@/shared/rpc/RpcError'
 
@@ -27,13 +27,150 @@ function getRpcClient(): RpcClient {
 	return api.getRpcClient((window as any).electron.webContents)
 }
 
+function useDarkMode() {
+	const [isDark, setIsDark] = useState(false)
+
+	useEffect(() => {
+		const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+		setIsDark(mediaQuery.matches)
+
+		const handler = (e: MediaQueryListEvent) => setIsDark(e.matches)
+		mediaQuery.addEventListener('change', handler)
+		return () => mediaQuery.removeEventListener('change', handler)
+	}, [])
+
+	return isDark
+}
+
+function useThemeColors(isDark: boolean) {
+	const styles: Record<string, React.CSSProperties> = {
+		container: {
+			padding: '24px',
+			maxWidth: '1200px',
+			margin: '0 auto',
+		},
+		pageTitle: {
+			fontSize: '28px',
+			fontWeight: 'bold',
+			marginBottom: '8px',
+			color: isDark ? '#fff' : '#000',
+		},
+		subtitle: {
+			fontSize: '16px',
+			color: isDark ? '#aaa' : '#666',
+			marginBottom: '24px',
+		},
+		grid: {
+			display: 'grid',
+			gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+			gap: '16px',
+		},
+		card: {
+			border: `1px solid ${isDark ? '#333' : '#e0e0e0'}`,
+			borderRadius: '8px',
+			padding: '16px',
+			backgroundColor: isDark ? '#1a1a1a' : '#fff',
+		},
+		cardTitle: {
+			fontSize: '14px',
+			fontWeight: 'bold',
+			marginBottom: '12px',
+			fontFamily: 'monospace',
+			color: isDark ? '#fff' : '#000',
+		},
+		inputRow: {
+			display: 'flex',
+			gap: '12px',
+			marginBottom: '12px',
+		},
+		inputGroup: {
+			display: 'flex',
+			flexDirection: 'column',
+			gap: '4px',
+			flex: 1,
+		},
+		label: {
+			fontSize: '12px',
+			color: isDark ? '#aaa' : '#666',
+		},
+		input: {
+			padding: '8px',
+			border: `1px solid ${isDark ? '#444' : '#ccc'}`,
+			borderRadius: '4px',
+			fontSize: '14px',
+			backgroundColor: isDark ? '#222' : '#fff',
+			color: isDark ? '#fff' : '#000',
+		},
+		buttonRow: {
+			display: 'flex',
+			gap: '8px',
+			marginBottom: '12px',
+		},
+		button: {
+			padding: '8px 16px',
+			backgroundColor: '#007AFF',
+			color: '#fff',
+			border: 'none',
+			borderRadius: '4px',
+			cursor: 'pointer',
+			fontSize: '14px',
+		},
+		cancelButton: {
+			backgroundColor: '#FF3B30',
+		},
+		result: {
+			marginTop: '12px',
+			padding: '8px',
+			backgroundColor: isDark ? '#222' : '#f5f5f5',
+			borderRadius: '4px',
+			fontSize: '12px',
+			fontFamily: 'monospace',
+			whiteSpace: 'pre-wrap',
+			color: isDark ? '#fff' : '#000',
+		},
+		error: {
+			marginTop: '12px',
+			padding: '8px',
+			backgroundColor: isDark ? '#3a1a1a' : '#fff0f0',
+			borderRadius: '4px',
+			fontSize: '12px',
+			color: '#FF3B30',
+			fontFamily: 'monospace',
+		},
+		progress: {
+			marginTop: '12px',
+			fontSize: '14px',
+			fontFamily: 'monospace',
+			color: isDark ? '#fff' : '#000',
+		},
+		chunk: {
+			marginLeft: '4px',
+			color: '#007AFF',
+		},
+		eventLog: {
+			marginTop: '12px',
+			padding: '8px',
+			backgroundColor: isDark ? '#222' : '#f5f5f5',
+			borderRadius: '4px',
+			fontSize: '12px',
+			fontFamily: 'monospace',
+			maxHeight: '150px',
+			overflowY: 'auto',
+			color: isDark ? '#fff' : '#000',
+		},
+	}
+	return styles
+}
+
 // Card component for basic RPC calls
 function CallCard({
 	title,
 	onCall,
+	styles,
 }: {
 	title: string
 	onCall: () => Promise<{ result: unknown; time: string }>
+	styles: ReturnType<typeof useThemeColors>
 }) {
 	const [loading, setLoading] = useState(false)
 	const [result, setResult] = useState<{
@@ -84,10 +221,12 @@ function InputCallCard({
 	title,
 	inputFields,
 	onCall,
+	styles,
 }: {
 	title: string
 	inputFields: { label: string; defaultValue: string }[]
 	onCall: (values: string[]) => Promise<{ result: unknown; time: string }>
+	styles: ReturnType<typeof useThemeColors>
 }) {
 	const [values, setValues] = useState<string[]>(
 		inputFields.map((f) => f.defaultValue)
@@ -154,7 +293,13 @@ function InputCallCard({
 }
 
 // Card for streaming RPC calls
-function StreamCard({ title }: { title: string }) {
+function StreamCard({
+	title,
+	styles,
+}: {
+	title: string
+	styles: ReturnType<typeof useThemeColors>
+}) {
 	const [loading, setLoading] = useState(false)
 	const [streaming, setStreaming] = useState(false)
 	const [chunks, setChunks] = useState<number[]>([])
@@ -263,7 +408,11 @@ function StreamCard({ title }: { title: string }) {
 }
 
 // Card for AbortSignal test
-function AbortSignalCard() {
+function AbortSignalCard({
+	styles,
+}: {
+	styles: ReturnType<typeof useThemeColors>
+}) {
 	const [loading, setLoading] = useState(false)
 	const [result, setResult] = useState<{
 		result: unknown
@@ -334,7 +483,11 @@ function AbortSignalCard() {
 }
 
 // Card for event listener
-function EventListenerCard() {
+function EventListenerCard({
+	styles,
+}: {
+	styles: ReturnType<typeof useThemeColors>
+}) {
 	const [listening, setListening] = useState(false)
 	const [events, setEvents] = useState<{ name: string; data: unknown }[]>([])
 	const [eventName, setEventName] = useState('my-event')
@@ -412,6 +565,9 @@ function EventListenerCard() {
 }
 
 export function RpcDebugPage() {
+	const isDark = useDarkMode()
+	const styles = useThemeColors(isDark)
+
 	return (
 		<div style={styles['container']}>
 			<h1 style={styles['pageTitle']}>RPC Debug Examples</h1>
@@ -431,6 +587,7 @@ export function RpcDebugPage() {
 						)
 						return { result, time: `${Date.now() - start}ms` }
 					}}
+					styles={styles}
 				/>
 
 				<InputCallCard
@@ -450,9 +607,10 @@ export function RpcDebugPage() {
 						)
 						return { result, time: `${Date.now() - start}ms` }
 					}}
+					styles={styles}
 				/>
 
-				<StreamCard title="/debug/stream-numbers" />
+				<StreamCard title="/debug/stream-numbers" styles={styles} />
 
 				<CallCard
 					title="/debug/server-time"
@@ -465,9 +623,10 @@ export function RpcDebugPage() {
 						}>('/debug/server-time', {})
 						return { result, time: `${Date.now() - start}ms` }
 					}}
+					styles={styles}
 				/>
 
-				<AbortSignalCard />
+				<AbortSignalCard styles={styles} />
 
 				<InputCallCard
 					title="/debug/trigger-event"
@@ -482,120 +641,11 @@ export function RpcDebugPage() {
 						}>('/debug/trigger-event', {}, name)
 						return { result, time: `${Date.now() - start}ms` }
 					}}
+					styles={styles}
 				/>
 
-				<EventListenerCard />
+				<EventListenerCard styles={styles} />
 			</div>
 		</div>
 	)
-}
-
-const styles: Record<string, React.CSSProperties> = {
-	container: {
-		padding: '24px',
-		maxWidth: '1200px',
-		margin: '0 auto',
-	},
-	pageTitle: {
-		fontSize: '28px',
-		fontWeight: 'bold',
-		marginBottom: '8px',
-	},
-	subtitle: {
-		fontSize: '16px',
-		color: '#666',
-		marginBottom: '24px',
-	},
-	grid: {
-		display: 'grid',
-		gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-		gap: '16px',
-	},
-	card: {
-		border: '1px solid #e0e0e0',
-		borderRadius: '8px',
-		padding: '16px',
-		backgroundColor: '#fff',
-	},
-	cardTitle: {
-		fontSize: '14px',
-		fontWeight: 'bold',
-		marginBottom: '12px',
-		fontFamily: 'monospace',
-	},
-	inputRow: {
-		display: 'flex',
-		gap: '12px',
-		marginBottom: '12px',
-	},
-	inputGroup: {
-		display: 'flex',
-		flexDirection: 'column',
-		gap: '4px',
-		flex: 1,
-	},
-	label: {
-		fontSize: '12px',
-		color: '#666',
-	},
-	input: {
-		padding: '8px',
-		border: '1px solid #ccc',
-		borderRadius: '4px',
-		fontSize: '14px',
-	},
-	buttonRow: {
-		display: 'flex',
-		gap: '8px',
-		marginBottom: '12px',
-	},
-	button: {
-		padding: '8px 16px',
-		backgroundColor: '#007AFF',
-		color: '#fff',
-		border: 'none',
-		borderRadius: '4px',
-		cursor: 'pointer',
-		fontSize: '14px',
-	},
-	cancelButton: {
-		backgroundColor: '#FF3B30',
-	},
-	result: {
-		marginTop: '12px',
-		padding: '8px',
-		backgroundColor: '#f5f5f5',
-		borderRadius: '4px',
-		fontSize: '12px',
-		fontFamily: 'monospace',
-		whiteSpace: 'pre-wrap',
-	},
-	error: {
-		marginTop: '12px',
-		padding: '8px',
-		backgroundColor: '#fff0f0',
-		borderRadius: '4px',
-		fontSize: '12px',
-		color: '#FF3B30',
-		fontFamily: 'monospace',
-	},
-	progress: {
-		marginTop: '12px',
-		fontSize: '14px',
-		fontFamily: 'monospace',
-	},
-	chunk: {
-		marginLeft: '4px',
-		color: '#007AFF',
-	},
-	eventLog: {
-		marginTop: '12px',
-		padding: '8px',
-		backgroundColor: '#f5f5f5',
-		borderRadius: '4px',
-		fontSize: '12px',
-		fontFamily: 'monospace',
-		maxHeight: '150px',
-		overflowY: 'auto',
-	},
 }
