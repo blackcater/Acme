@@ -38,15 +38,18 @@ import { ipcMain } from 'electron'
 import { electronApp, is, platform } from '@electron-toolkit/utils'
 import { ElectronRpcServer, AppWindowRegistry } from '../shared/rpc/electron'
 import { RpcDebugService } from './services/RpcDebugService'
+import { WindowManager } from './services/WindowManager'
 
 // Global instances
+let windowManager: WindowManager
 let windowRegistry: AppWindowRegistry
 let rpcServer: ElectronRpcServer
 let rpcDebugService: RpcDebugService
 
 app.whenReady()
   .then(() => {
-    // 1. Create WindowRegistry for managing window clients
+    // 1. Create WindowManager and WindowRegistry
+    windowManager = new WindowManager()
     windowRegistry = new AppWindowRegistry()
 
     // 2. Create ElectronRpcServer
@@ -156,7 +159,7 @@ let rpcClient: ElectronRpcClient | null = null
 const api = {
   // Factory function to create/retrieve RPC client
   // Called by renderer with window's webContents
-  getRpcClient: (webContents: Electron.WebContents): ElectronRpcClient => {
+  getRpcClient: (webContents: Electron.WebContents) => {
     if (!rpcClient) {
       rpcClient = new ElectronRpcClient(webContents)
     }
@@ -177,17 +180,21 @@ if (process.contextIsolated) {
 **File**: `apps/desktop/src/preload/preload.d.ts`
 
 ```typescript
-// Forward declaration - ElectronRpcClient is implemented in index.ts
-declare class ElectronRpcClient {
+// Type for the RPC client exposed via contextBridge
+// This must match the interface of ElectronRpcClient from shared/rpc/electron
+interface IRpcClient {
   readonly clientId: string
   readonly groupId?: string
   call<T>(event: string, options?: object, ...args: unknown[]): Promise<T>
-  stream<T>(event: string, options?: object, ...args: unknown[]): object
+  stream<T>(event: string, options?: object, ...args: unknown[]): {
+    [Symbol.asyncIterator](): AsyncIterator<T>
+    cancel(): void
+  }
   onEvent(event: string, listener: (...args: unknown[]) => void): () => void
 }
 
 interface API {
-  getRpcClient(webContents: Electron.WebContents): ElectronRpcClient
+  getRpcClient(webContents: Electron.WebContents): IRpcClient
 }
 ```
 
