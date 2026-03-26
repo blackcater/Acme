@@ -68,6 +68,7 @@ export class HttpRpcClient implements RpcClient {
 		let reader: ReadableStreamDefaultReader<Uint8Array> | null = null
 		let decoder: TextDecoder | null = null
 		let buffer = ''
+		const eventQueue: T[] = []
 
 		const iterator: AsyncIterator<T> = {
 			next: async () => {
@@ -102,17 +103,29 @@ export class HttpRpcClient implements RpcClient {
 					return { done: true, value: undefined }
 				}
 
+				// Return queued event if available
+				if (eventQueue.length > 0) {
+					return { done: false, value: eventQueue.shift() as T }
+				}
+
 				buffer += decoder!.decode(value, { stream: true })
-				const lines = buffer.split('\n')
+				const lines = buffer.split(/\r?\n/)
 				buffer = lines.pop()!
 
+				let firstEvent: T | null = null
 				for (const line of lines) {
 					if (line.startsWith('data: ')) {
-						return {
-							done: false,
-							value: JSON.parse(line.slice(6)) as T,
+						const event = JSON.parse(line.slice(6)) as T
+						if (firstEvent === null) {
+							firstEvent = event
+						} else {
+							eventQueue.push(event)
 						}
 					}
+				}
+
+				if (firstEvent !== null) {
+					return { done: false, value: firstEvent }
 				}
 
 				return iterator.next()
