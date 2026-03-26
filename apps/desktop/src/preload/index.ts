@@ -8,7 +8,8 @@ import { IpcRendererRpcClient } from '../shared/rpc/electron'
 const rpcClient = new IpcRendererRpcClient(ipcRenderer)
 
 // Expose API - contextBridge only copies enumerable own properties
-const api = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const api: any = {
 	getRpcClient: () => ({
 		clientId: rpcClient.clientId,
 		groupId: rpcClient.groupId,
@@ -16,6 +17,8 @@ const api = {
 		stream: rpcClient.stream.bind(rpcClient),
 		onEvent: rpcClient.onEvent.bind(rpcClient),
 	}),
+	createWindow: (groupId: string | null) =>
+		ipcRenderer.invoke('window:create', groupId),
 }
 
 if (process.contextIsolated) {
