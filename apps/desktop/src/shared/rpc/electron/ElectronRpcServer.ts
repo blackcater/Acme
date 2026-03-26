@@ -1,18 +1,12 @@
-import type { IpcMain, WebContents } from 'electron'
+import type { IpcMain } from 'electron'
 
 import { RpcError } from '../RpcError'
-import type { RpcServer, RpcRouter, Rpc } from '../types'
+import type { RpcServer, RpcRouter, Rpc, WindowRegistry } from '../types'
 import { ElectronRpcRouter } from './ElectronRpcRouter'
-
-// Injected by app layer to manage webContents
-export interface WebContentsManager {
-	send(clientId: string, channel: string, ...args: unknown[]): void
-	getWebContents(clientId: string): WebContents | null
-}
 
 export class ElectronRpcServer implements RpcServer {
 	constructor(
-		private readonly _webContentsManager: WebContentsManager,
+		private readonly _registry: WindowRegistry,
 		private readonly _ipcMain: IpcMain
 	) {}
 
@@ -43,7 +37,19 @@ export class ElectronRpcServer implements RpcServer {
 			`rpc:invoke:${eventPath}`,
 			async (e, payload: { invokeId: string; args: unknown[] }) => {
 				const { invokeId, args } = payload
-				const clientId = `client-${e.sender.id}`
+				// Get clientId by WebContents
+				const clientId = this._registry.getClientIdByWebContents(
+					e.sender
+				)
+				if (!clientId) {
+					e.sender.send(`rpc:response:${invokeId}`, {
+						error: new RpcError(
+							'UNAUTHORIZED',
+							'Unknown client'
+						).toJSON(),
+					})
+					return
+				}
 
 				try {
 					const result = await handlerFn({ clientId }, ...args)
@@ -85,26 +91,14 @@ export class ElectronRpcServer implements RpcServer {
 	}
 
 	push(event: string, target: Rpc.Target, ...args: unknown[]): void {
-		const eventPath = this._normalizeEvent(event)
+		const channel = `rpc:event:${this._normalizeEvent(event)}`
 
 		if (target.type === 'broadcast') {
-			this._webContentsManager.send(
-				'*',
-				`rpc:event:${eventPath}`,
-				...args
-			)
+			this._registry.sendToAll(channel, ...args)
 		} else if (target.type === 'client' && target.clientId) {
-			this._webContentsManager.send(
-				target.clientId,
-				`rpc:event:${eventPath}`,
-				...args
-			)
+			this._registry.sendToClient(target.clientId, channel, ...args)
 		} else if (target.type === 'group' && target.groupId) {
-			this._webContentsManager.send(
-				`group:${target.groupId}`,
-				`rpc:event:${eventPath}`,
-				...args
-			)
+			this._registry.sendToGroup(target.groupId, channel, ...args)
 		}
 	}
 

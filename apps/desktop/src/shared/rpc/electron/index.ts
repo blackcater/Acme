@@ -1,4 +1,4 @@
 export { ElectronRpcServer } from './ElectronRpcServer'
-export type { WebContentsManager } from './ElectronRpcServer'
 export { ElectronRpcClient } from './ElectronRpcClient'
 export { AppWindowRegistry } from './AppWindowRegistry'
+export type { WindowRegistry } from '../types'

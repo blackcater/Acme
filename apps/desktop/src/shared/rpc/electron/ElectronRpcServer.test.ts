@@ -2,12 +2,19 @@ import { describe, it, expect, vi } from 'bun:test'
 
 import type { IpcMain } from 'electron'
 
-import type { WebContentsManager } from './ElectronRpcServer'
+import type { WindowRegistry } from '../types'
 import { ElectronRpcServer } from './ElectronRpcServer'
 
-const createMockManager = (): WebContentsManager => ({
-	send: vi.fn(),
-	getWebContents: vi.fn(),
+const createMockRegistry = (): WindowRegistry => ({
+	registerWindow: vi.fn(),
+	unregisterWindow: vi.fn(),
+	joinGroup: vi.fn(),
+	leaveGroup: vi.fn(),
+	sendToClient: vi.fn(),
+	sendToGroup: vi.fn(),
+	sendToAll: vi.fn(),
+	getWebContentsByClientId: vi.fn(),
+	getClientIdByWebContents: vi.fn(),
 })
 
 const createMockIpcMain = (): IpcMain =>
@@ -18,10 +25,10 @@ const createMockIpcMain = (): IpcMain =>
 
 describe('ElectronRpcServer', () => {
 	it('should register handler with ipcMain.on', async () => {
-		const mockManager = createMockManager()
+		const mockRegistry = createMockRegistry()
 		const mockIpcMain = createMockIpcMain()
 
-		const server = new ElectronRpcServer(mockManager, mockIpcMain)
+		const server = new ElectronRpcServer(mockRegistry, mockIpcMain)
 
 		server.handle('test/echo', async (_ctx, msg) => {
 			return { echoed: msg }
@@ -35,10 +42,10 @@ describe('ElectronRpcServer', () => {
 	})
 
 	it('should support router for namespace organization', async () => {
-		const mockManager = createMockManager()
+		const mockRegistry = createMockRegistry()
 		const mockIpcMain = createMockIpcMain()
 
-		const server = new ElectronRpcServer(mockManager, mockIpcMain)
+		const server = new ElectronRpcServer(mockRegistry, mockIpcMain)
 
 		server.router('conversation').handle('create', async (_ctx, params) => {
 			return { id: 'conv-1', ...(params as object) }
@@ -51,10 +58,10 @@ describe('ElectronRpcServer', () => {
 	})
 
 	it('should normalize event paths', async () => {
-		const mockManager = createMockManager()
+		const mockRegistry = createMockRegistry()
 		const mockIpcMain = createMockIpcMain()
 
-		const server = new ElectronRpcServer(mockManager, mockIpcMain)
+		const server = new ElectronRpcServer(mockRegistry, mockIpcMain)
 
 		// Test with leading/trailing slashes
 		server.handle('/test/path/', async (_ctx) => 'ok')
@@ -66,25 +73,24 @@ describe('ElectronRpcServer', () => {
 	})
 
 	it('should push event to broadcast', async () => {
-		const mockManager = createMockManager()
+		const mockRegistry = createMockRegistry()
 		const mockIpcMain = createMockIpcMain()
 
-		const server = new ElectronRpcServer(mockManager, mockIpcMain)
+		const server = new ElectronRpcServer(mockRegistry, mockIpcMain)
 
 		server.push('test/event', { type: 'broadcast' }, { data: 'test' })
 
-		expect(mockManager.send).toHaveBeenCalledWith(
-			'*',
+		expect(mockRegistry.sendToAll).toHaveBeenCalledWith(
 			'rpc:event:test/event',
 			{ data: 'test' }
 		)
 	})
 
 	it('should push event to specific client', async () => {
-		const mockManager = createMockManager()
+		const mockRegistry = createMockRegistry()
 		const mockIpcMain = createMockIpcMain()
 
-		const server = new ElectronRpcServer(mockManager, mockIpcMain)
+		const server = new ElectronRpcServer(mockRegistry, mockIpcMain)
 
 		server.push(
 			'test/event',
@@ -92,7 +98,7 @@ describe('ElectronRpcServer', () => {
 			{ data: 'test' }
 		)
 
-		expect(mockManager.send).toHaveBeenCalledWith(
+		expect(mockRegistry.sendToClient).toHaveBeenCalledWith(
 			'client-123',
 			'rpc:event:test/event',
 			{ data: 'test' }
@@ -100,10 +106,10 @@ describe('ElectronRpcServer', () => {
 	})
 
 	it('should push event to group', async () => {
-		const mockManager = createMockManager()
+		const mockRegistry = createMockRegistry()
 		const mockIpcMain = createMockIpcMain()
 
-		const server = new ElectronRpcServer(mockManager, mockIpcMain)
+		const server = new ElectronRpcServer(mockRegistry, mockIpcMain)
 
 		server.push(
 			'test/event',
@@ -111,8 +117,8 @@ describe('ElectronRpcServer', () => {
 			{ data: 'test' }
 		)
 
-		expect(mockManager.send).toHaveBeenCalledWith(
-			'group:group-456',
+		expect(mockRegistry.sendToGroup).toHaveBeenCalledWith(
+			'group-456',
 			'rpc:event:test/event',
 			{ data: 'test' }
 		)
