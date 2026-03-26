@@ -31,7 +31,7 @@ export class HttpRpcServer implements RpcServer {
 		const handler = this._handlers.get(path)
 
 		if (!handler) {
-			throw new RpcError('NOT_FOUND', `Handler not found: ${path}`)
+			throw new RpcError(RpcError.NOT_FOUND, `Handler not found: ${path}`)
 		}
 
 		// Schema validation
@@ -41,7 +41,7 @@ export class HttpRpcServer implements RpcServer {
 
 			if ('issues' in result) {
 				throw new RpcError(
-					'INVALID_PARAMS',
+					RpcError.INVALID_PARAMS,
 					'Schema validation failed',
 					result.issues
 				)

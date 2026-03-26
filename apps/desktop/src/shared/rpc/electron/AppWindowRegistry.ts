@@ -3,14 +3,15 @@ import type { BrowserWindow, WebContents } from 'electron'
 import type { WindowRegistry } from '../types'
 
 export class AppWindowRegistry implements WindowRegistry {
-	private windows = new Map<string, BrowserWindow>()
-	private groups = new Map<string, Set<string>>()
-	private webContentsToClientId = new Map<WebContents, string>()
+	private readonly _windows = new Map<string, BrowserWindow>()
+	private readonly _groups = new Map<string, Set<string>>()
+	private readonly _webContentsToClientId = new Map<WebContents, string>()
 
 	registerWindow(window: BrowserWindow, group?: string): string {
 		const clientId = `client-${window.id}`
-		this.windows.set(clientId, window)
-		this.webContentsToClientId.set(window.webContents, clientId)
+
+		this._windows.set(clientId, window)
+		this._webContentsToClientId.set(window.webContents, clientId)
 
 		if (group) {
 			this.joinGroup(clientId, group)
@@ -20,37 +21,37 @@ export class AppWindowRegistry implements WindowRegistry {
 	}
 
 	unregisterWindow(window: BrowserWindow): void {
-		const clientId = this.webContentsToClientId.get(window.webContents)
+		const clientId = this._webContentsToClientId.get(window.webContents)
 		if (!clientId) return
 
-		for (const [, clientIds] of this.groups) {
+		for (const [, clientIds] of this._groups) {
 			clientIds.delete(clientId)
 		}
 
-		this.windows.delete(clientId)
-		this.webContentsToClientId.delete(window.webContents)
+		this._windows.delete(clientId)
+		this._webContentsToClientId.delete(window.webContents)
 	}
 
 	joinGroup(clientId: string, groupId: string): void {
-		if (!this.groups.has(groupId)) {
-			this.groups.set(groupId, new Set())
+		if (!this._groups.has(groupId)) {
+			this._groups.set(groupId, new Set())
 		}
-		this.groups.get(groupId)!.add(clientId)
+		this._groups.get(groupId)!.add(clientId)
 	}
 
 	leaveGroup(clientId: string, groupId: string): void {
-		this.groups.get(groupId)?.delete(clientId)
+		this._groups.get(groupId)?.delete(clientId)
 	}
 
 	sendToClient(clientId: string, channel: string, ...args: unknown[]): void {
-		const window = this.windows.get(clientId)
+		const window = this._windows.get(clientId)
 		if (window && !window.isDestroyed()) {
 			window.webContents.send(channel, ...args)
 		}
 	}
 
 	sendToGroup(groupId: string, channel: string, ...args: unknown[]): void {
-		const clientIds = this.groups.get(groupId)
+		const clientIds = this._groups.get(groupId)
 		if (clientIds) {
 			for (const clientId of clientIds) {
 				this.sendToClient(clientId, channel, ...args)
@@ -59,17 +60,17 @@ export class AppWindowRegistry implements WindowRegistry {
 	}
 
 	sendToAll(channel: string, ...args: unknown[]): void {
-		for (const [clientId] of this.windows) {
+		for (const [clientId] of this._windows) {
 			this.sendToClient(clientId, channel, ...args)
 		}
 	}
 
 	getWebContentsByClientId(clientId: string): WebContents | null {
-		const window = this.windows.get(clientId)
+		const window = this._windows.get(clientId)
 		return window && !window.isDestroyed() ? window.webContents : null
 	}
 
 	getClientIdByWebContents(webContents: WebContents): string | null {
-		return this.webContentsToClientId.get(webContents) ?? null
+		return this._webContentsToClientId.get(webContents) ?? null
 	}
 }

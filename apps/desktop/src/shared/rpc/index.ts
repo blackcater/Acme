@@ -11,6 +11,7 @@ export {
 // Electron transport
 export { ElectronRpcServer } from './electron/ElectronRpcServer'
 export { ElectronRpcClient } from './electron/ElectronRpcClient'
+export { AppWindowRegistry as WindowRegistryImpl } from './electron/AppWindowRegistry'
 
 // HTTP transport
 export { HttpRpcServer } from './http/HttpRpcServer'

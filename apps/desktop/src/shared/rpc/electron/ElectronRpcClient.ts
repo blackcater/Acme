@@ -1,7 +1,7 @@
 import type { WebContents } from 'electron'
 
 import { RpcError, type IRpcErrorDefinition } from '../RpcError'
-import type { RpcClient, Rpc, RpcCallOptions } from '../types'
+import type { RpcClient, Rpc } from '../types'
 
 export class ElectronRpcClient implements RpcClient {
 	readonly clientId: string
@@ -77,16 +77,16 @@ export class ElectronRpcClient implements RpcClient {
 
 	async call<T>(
 		event: string,
-		options: RpcCallOptions = {},
+		options: Rpc.CallOptions = {},
 		...args: unknown[]
 	): Promise<T> {
 		const { signal } = options
 		const invokeId = `invoke-${++this._invokeCounter}`
-		const eventPath = event.replace(/^\/|\/$/g, '')
+		const eventPath = event.replaceAll(/^\/|\/$/g, '')
 
 		return new Promise((resolve, reject) => {
 			if (signal?.aborted) {
-				reject(new RpcError('ABORTED', 'Request was aborted'))
+				reject(new RpcError(RpcError.ABORTED, 'Request was aborted'))
 				return
 			}
 
@@ -94,10 +94,15 @@ export class ElectronRpcClient implements RpcClient {
 				this._pendingCalls.delete(invokeId)
 				if (signal?.reason?.name === 'TimeoutError') {
 					reject(
-						new RpcError('TIMEOUT', `RPC call ${event} timed out`)
+						new RpcError(
+							RpcError.TIMEOUT,
+							`RPC call ${event} timed out`
+						)
 					)
 				} else {
-					reject(new RpcError('ABORTED', 'Request was aborted'))
+					reject(
+						new RpcError(RpcError.ABORTED, 'Request was aborted')
+					)
 				}
 			}
 
@@ -123,11 +128,11 @@ export class ElectronRpcClient implements RpcClient {
 
 	stream<T>(
 		event: string,
-		_options: RpcCallOptions = {},
+		_options: Rpc.CallOptions = {},
 		...args: unknown[]
 	): Rpc.StreamResult<T> {
 		const invokeId = `invoke-${++this._invokeCounter}`
-		const eventPath = event.replace(/^\/|\/$/g, '')
+		const eventPath = event.replaceAll(/^\/|\/$/g, '')
 		const chunks: T[] = []
 
 		const cancelStream = () => {

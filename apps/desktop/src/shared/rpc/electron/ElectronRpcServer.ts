@@ -44,7 +44,7 @@ export class ElectronRpcServer implements RpcServer {
 				if (!clientId) {
 					e.sender.send(`rpc:response:${invokeId}`, {
 						error: new RpcError(
-							'UNAUTHORIZED',
+							RpcError.UNAUTHORIZED,
 							'Unknown client'
 						).toJSON(),
 					})

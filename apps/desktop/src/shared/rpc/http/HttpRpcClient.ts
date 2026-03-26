@@ -1,5 +1,5 @@
 import { RpcError, type IRpcErrorDefinition } from '../RpcError'
-import type { RpcCallOptions, RpcClient, Rpc } from '../types'
+import type { RpcClient, Rpc } from '../types'
 
 export class HttpRpcClient implements RpcClient {
 	readonly clientId: string
@@ -7,7 +7,7 @@ export class HttpRpcClient implements RpcClient {
 
 	private readonly _baseUrl: string
 	private _eventSource: EventSource | null = null
-	private _eventListeners = new Map<
+	private readonly _eventListeners = new Map<
 		string,
 		Set<(...args: unknown[]) => void>
 	>()
@@ -23,10 +23,10 @@ export class HttpRpcClient implements RpcClient {
 
 	async call<T>(
 		event: string,
-		options: RpcCallOptions = {},
+		options: Rpc.CallOptions = {},
 		...args: unknown[]
 	): Promise<T> {
-		const normalizedEvent = event.replace(/^\/|\/$/g, '')
+		const normalizedEvent = event.replaceAll(/^\/|\/$/g, '')
 
 		const response = await fetch(
 			`${this._baseUrl}/rpc/${normalizedEvent}`,
@@ -60,10 +60,10 @@ export class HttpRpcClient implements RpcClient {
 
 	stream<T>(
 		event: string,
-		options: RpcCallOptions = {},
+		options: Rpc.CallOptions = {},
 		...args: unknown[]
 	): Rpc.StreamResult<T> {
-		const normalizedEvent = event.replace(/^\/|\/$/g, '')
+		const normalizedEvent = event.replaceAll(/^\/|\/$/g, '')
 
 		let reader: ReadableStreamDefaultReader<Uint8Array> | null = null
 		let decoder: TextDecoder | null = null
