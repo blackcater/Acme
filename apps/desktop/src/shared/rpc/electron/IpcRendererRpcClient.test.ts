@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'bun:test'
+
 import { IpcRendererRpcClient } from './IpcRendererRpcClient'
 
 describe('IpcRendererRpcClient', () => {
@@ -57,7 +58,11 @@ describe('IpcRendererRpcClient', () => {
 
 		client = new IpcRendererRpcClient(mockIpcRenderer)
 
-		const resultPromise = client.call<{ message: string }>('/test', {}, 'arg1')
+		const resultPromise = client.call<{ message: string }>(
+			'/test',
+			{},
+			'arg1'
+		)
 
 		// Simulate successful response
 		responseHandler!(null, {
@@ -96,9 +101,9 @@ describe('IpcRendererRpcClient', () => {
 		const controller = new AbortController()
 		controller.abort()
 
-		await expect(client.call('/test', { signal: controller.signal })).rejects.toThrow(
-			'Request was aborted'
-		)
+		await expect(
+			client.call('/test', { signal: controller.signal })
+		).rejects.toThrow('Request was aborted')
 	})
 
 	it('should handle AbortSignal timeout', async () => {

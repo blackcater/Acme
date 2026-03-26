@@ -8,9 +8,18 @@ export class IpcRendererRpcClient implements RpcClient {
 	readonly groupId?: string
 
 	private readonly _ipcRenderer: IpcRenderer
-	private readonly _pendingCalls = new Map<string, { resolve: Function; reject: Function }>()
-	private readonly _eventListeners = new Map<string, Set<(...args: unknown[]) => void>>()
-	private readonly _streamHandlers = new Map<string, { onChunk: Function; onDone: Function; cancel: Function }>()
+	private readonly _pendingCalls = new Map<
+		string,
+		{ resolve: Function; reject: Function }
+	>()
+	private readonly _eventListeners = new Map<
+		string,
+		Set<(...args: unknown[]) => void>
+	>()
+	private readonly _streamHandlers = new Map<
+		string,
+		{ onChunk: Function; onDone: Function; cancel: Function }
+	>()
 	private _invokeCounter = 0
 
 	constructor(ipcRenderer: IpcRenderer, groupId?: string) {
@@ -24,7 +33,11 @@ export class IpcRendererRpcClient implements RpcClient {
 		// Server sends to this channel with full channel info in payload
 		ipcRenderer.on('rpc:response', (...args: unknown[]) => {
 			// args[0] is the event (unused), args[1] is the payload
-			const payload = args[1] as { channel: string; result?: unknown; error?: IRpcErrorDefinition }
+			const payload = args[1] as {
+				channel: string
+				result?: unknown
+				error?: IRpcErrorDefinition
+			}
 			if (!payload?.channel) return
 
 			// Extract invokeId from channel like "rpc:response:invoke-1"
@@ -56,7 +69,11 @@ export class IpcRendererRpcClient implements RpcClient {
 
 		// Listen for generic rpc:stream channel
 		ipcRenderer.on('rpc:stream', (...args: unknown[]) => {
-			const payload = args[1] as { channel: string; chunk?: unknown; done?: boolean }
+			const payload = args[1] as {
+				channel: string
+				chunk?: unknown
+				done?: boolean
+			}
 			if (!payload?.channel) return
 			// channel format: "rpc:stream:eventPath:invokeId"
 			const parts = payload.channel.split(':')
@@ -72,7 +89,11 @@ export class IpcRendererRpcClient implements RpcClient {
 		})
 	}
 
-	async call<T>(event: string, options: Rpc.CallOptions = {}, ...args: unknown[]): Promise<T> {
+	async call<T>(
+		event: string,
+		options: Rpc.CallOptions = {},
+		...args: unknown[]
+	): Promise<T> {
 		const { signal } = options
 		const invokeId = `invoke-${++this._invokeCounter}`
 		const eventPath = event.replaceAll(/^\/|\/$/g, '')
@@ -86,9 +107,16 @@ export class IpcRendererRpcClient implements RpcClient {
 			const abortHandler = () => {
 				this._pendingCalls.delete(invokeId)
 				if (signal?.reason?.name === 'TimeoutError') {
-					reject(new RpcError(RpcError.TIMEOUT, `RPC call ${event} timed out`))
+					reject(
+						new RpcError(
+							RpcError.TIMEOUT,
+							`RPC call ${event} timed out`
+						)
+					)
 				} else {
-					reject(new RpcError(RpcError.ABORTED, 'Request was aborted'))
+					reject(
+						new RpcError(RpcError.ABORTED, 'Request was aborted')
+					)
 				}
 			}
 
@@ -105,11 +133,18 @@ export class IpcRendererRpcClient implements RpcClient {
 				},
 			})
 
-			this._ipcRenderer.send(`rpc:invoke:${eventPath}`, { invokeId, args })
+			this._ipcRenderer.send(`rpc:invoke:${eventPath}`, {
+				invokeId,
+				args,
+			})
 		})
 	}
 
-	stream<T>(event: string, _options: Rpc.CallOptions = {}, ...args: unknown[]): Rpc.StreamResult<T> {
+	stream<T>(
+		event: string,
+		_options: Rpc.CallOptions = {},
+		...args: unknown[]
+	): Rpc.StreamResult<T> {
 		const invokeId = `invoke-${++this._invokeCounter}`
 		const eventPath = event.replaceAll(/^\/|\/$/g, '')
 		const chunks: T[] = []
@@ -166,7 +201,10 @@ export class IpcRendererRpcClient implements RpcClient {
 		}
 	}
 
-	onEvent(event: string, listener: (...args: unknown[]) => void): Rpc.CancelFn {
+	onEvent(
+		event: string,
+		listener: (...args: unknown[]) => void
+	): Rpc.CancelFn {
 		if (!this._eventListeners.has(event)) {
 			this._eventListeners.set(event, new Set())
 		}
