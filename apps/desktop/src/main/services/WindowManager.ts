@@ -38,4 +38,34 @@ export class WindowManager {
 
 		return mainWindow
 	}
+
+	createDebugWindow(groupId?: string): { window: BrowserWindow; clientId: string } {
+		const window = new BrowserWindow({
+			width: 900,
+			height: 670,
+			show: false,
+			autoHideMenuBar: true,
+			...(process.platform === 'linux' ? { icon } : {}),
+			webPreferences: {
+				preload: join(__dirname, '../preload/index.js'),
+				sandbox: false,
+			},
+			titleBarStyle: 'hidden',
+		})
+
+		window.on('ready-to-show', () => {
+			window.show()
+		})
+
+		const clientId = `client-${window.id}`
+
+		// Load the rpc-debug route via hash history
+		if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+			window.loadURL(`${process.env['ELECTRON_RENDERER_URL']}#/rpc-debug`)
+		} else {
+			window.loadFile(join(__dirname, '../renderer/index.html'), { hash: '/rpc-debug' })
+		}
+
+		return { window, clientId }
+	}
 }
