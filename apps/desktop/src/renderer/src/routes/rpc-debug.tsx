@@ -23,8 +23,7 @@ function getRpcClient(): RpcClient {
 	if (!api?.getRpcClient) {
 		throw new Error('RPC client not available')
 	}
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	return api.getRpcClient((window as any).electron.webContents)
+	return api.getRpcClient()
 }
 
 function useDarkMode() {
