@@ -1,0 +1,601 @@
+import { useState } from 'react'
+
+import { RpcError } from '@/shared/rpc/RpcError'
+
+interface RpcClient {
+	readonly clientId: string
+	readonly groupId?: string
+	call<T>(event: string, options?: object, ...args: unknown[]): Promise<T>
+	stream<T>(
+		event: string,
+		options?: object,
+		...args: unknown[]
+	): {
+		[Symbol.asyncIterator](): AsyncIterator<T>
+		cancel(): void
+	}
+	onEvent(event: string, listener: (...args: unknown[]) => void): () => void
+}
+
+function getRpcClient(): RpcClient {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const api = (window as any).api
+	if (!api?.getRpcClient) {
+		throw new Error('RPC client not available')
+	}
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	return api.getRpcClient((window as any).electron.webContents)
+}
+
+// Card component for basic RPC calls
+function CallCard({
+	title,
+	onCall,
+}: {
+	title: string
+	onCall: () => Promise<{ result: unknown; time: string }>
+}) {
+	const [loading, setLoading] = useState(false)
+	const [result, setResult] = useState<{
+		result: unknown
+		time: string
+	} | null>(null)
+	const [error, setError] = useState<string | null>(null)
+
+	const handleCall = async () => {
+		setLoading(true)
+		setError(null)
+		try {
+			const res = await onCall()
+			setResult(res)
+		} catch (err) {
+			const rpcErr = err as RpcError
+			setError(rpcErr.message || String(err))
+			setResult(null)
+		} finally {
+			setLoading(false)
+		}
+	}
+
+	return (
+		<div style={styles['card']}>
+			<h3 style={styles['cardTitle']}>{title}</h3>
+			<button
+				style={styles['button']}
+				onClick={handleCall}
+				disabled={loading}
+			>
+				{loading ? 'Calling...' : 'Call'}
+			</button>
+			{result && (
+				<div style={styles['result']}>
+					<strong>Result:</strong> {JSON.stringify(result.result)}
+					<br />
+					<strong>Time:</strong> {result.time}
+				</div>
+			)}
+			{error && <div style={styles['error']}>Error: {error}</div>}
+		</div>
+	)
+}
+
+// Card for RPC calls with input
+function InputCallCard({
+	title,
+	inputFields,
+	onCall,
+}: {
+	title: string
+	inputFields: { label: string; defaultValue: string }[]
+	onCall: (values: string[]) => Promise<{ result: unknown; time: string }>
+}) {
+	const [values, setValues] = useState<string[]>(
+		inputFields.map((f) => f.defaultValue)
+	)
+	const [loading, setLoading] = useState(false)
+	const [result, setResult] = useState<{
+		result: unknown
+		time: string
+	} | null>(null)
+	const [error, setError] = useState<string | null>(null)
+
+	const handleCall = async () => {
+		setLoading(true)
+		setError(null)
+		try {
+			const res = await onCall(values)
+			setResult(res)
+		} catch (err) {
+			const rpcErr = err as RpcError
+			setError(rpcErr.message || String(err))
+			setResult(null)
+		} finally {
+			setLoading(false)
+		}
+	}
+
+	return (
+		<div style={styles['card']}>
+			<h3 style={styles['cardTitle']}>{title}</h3>
+			<div style={styles['inputRow']}>
+				{inputFields.map((field, idx) => (
+					<div key={field.label} style={styles['inputGroup']}>
+						<label style={styles['label']}>{field.label}</label>
+						<input
+							type="text"
+							style={styles['input']}
+							value={values[idx]}
+							onChange={(e) => {
+								const newValues = [...values]
+								newValues[idx] = e.target.value
+								setValues(newValues)
+							}}
+						/>
+					</div>
+				))}
+			</div>
+			<button
+				style={styles['button']}
+				onClick={handleCall}
+				disabled={loading}
+			>
+				{loading ? 'Calling...' : 'Call'}
+			</button>
+			{result && (
+				<div style={styles['result']}>
+					<strong>Result:</strong> {JSON.stringify(result.result)}
+					<br />
+					<strong>Time:</strong> {result.time}
+				</div>
+			)}
+			{error && <div style={styles['error']}>Error: {error}</div>}
+		</div>
+	)
+}
+
+// Card for streaming RPC calls
+function StreamCard({ title }: { title: string }) {
+	const [loading, setLoading] = useState(false)
+	const [streaming, setStreaming] = useState(false)
+	const [chunks, setChunks] = useState<number[]>([])
+	const [result, setResult] = useState<{
+		result: number[]
+		time: string
+	} | null>(null)
+	const [error, setError] = useState<string | null>(null)
+	const [currentStream, setCurrentStream] = useState<{
+		cancel: () => void
+	} | null>(null)
+
+	const handleStart = async () => {
+		setLoading(true)
+		setStreaming(true)
+		setChunks([])
+		setError(null)
+		setResult(null)
+
+		try {
+			const streamCtrl = { cancel: () => {} }
+			setCurrentStream(streamCtrl)
+
+			const client = getRpcClient()
+			const streamResult = client.stream<number>(
+				'/debug/stream-numbers',
+				{}
+			)
+
+			streamCtrl.cancel = () => {
+				streamResult.cancel()
+			}
+
+			const collected: number[] = []
+			for await (const chunk of streamResult) {
+				collected.push(chunk)
+				setChunks([...collected])
+			}
+
+			setResult({
+				result: collected,
+				time: new Date().toLocaleTimeString(),
+			})
+		} catch (err) {
+			const rpcErr = err as RpcError
+			setError(rpcErr.message || String(err))
+		} finally {
+			setLoading(false)
+			setStreaming(false)
+			setCurrentStream(null)
+		}
+	}
+
+	const handleCancel = () => {
+		if (currentStream) {
+			currentStream.cancel()
+		}
+		setStreaming(false)
+		setLoading(false)
+	}
+
+	return (
+		<div style={styles['card']}>
+			<h3 style={styles['cardTitle']}>{title}</h3>
+			<div style={styles['buttonRow']}>
+				<button
+					style={styles['button']}
+					onClick={handleStart}
+					disabled={loading || streaming}
+				>
+					{loading ? 'Starting...' : 'Start Stream'}
+				</button>
+				{streaming && (
+					<button
+						style={{
+							...styles['button'],
+							...styles['cancelButton'],
+						}}
+						onClick={handleCancel}
+					>
+						Cancel
+					</button>
+				)}
+			</div>
+			{streaming && (
+				<div style={styles['progress']}>
+					<strong>Progress:</strong>
+					{chunks.map((c, i) => (
+						<span key={i} style={styles['chunk']}>
+							[{c}]
+						</span>
+					))}
+				</div>
+			)}
+			{result && (
+				<div style={styles['result']}>
+					<strong>Final Result:</strong>{' '}
+					{JSON.stringify(result.result)}
+					<br />
+					<strong>Time:</strong> {result.time}
+				</div>
+			)}
+			{error && <div style={styles['error']}>Error: {error}</div>}
+		</div>
+	)
+}
+
+// Card for AbortSignal test
+function AbortSignalCard() {
+	const [loading, setLoading] = useState(false)
+	const [result, setResult] = useState<{
+		result: unknown
+		time: string
+	} | null>(null)
+	const [error, setError] = useState<string | null>(null)
+
+	const handleCall = async () => {
+		setLoading(true)
+		setError(null)
+		setResult(null)
+
+		try {
+			const client = getRpcClient()
+			const start = Date.now()
+
+			// Use 1 second timeout to abort a 3 second handler
+			const result_ = await client.call<{
+				text: string
+				completed: boolean
+			}>(
+				'/debug/slow-echo',
+				{ signal: AbortSignal.timeout(1000) },
+				'hello'
+			)
+
+			setResult({
+				result: result_,
+				time: `${Date.now() - start}ms`,
+			})
+		} catch (err) {
+			const rpcErr = err as RpcError
+			if (
+				rpcErr.code === RpcError.ABORTED ||
+				rpcErr.code === RpcError.TIMEOUT
+			) {
+				setError(`Timeout correctly caught: ${rpcErr.message}`)
+			} else {
+				setError(rpcErr.message || String(err))
+			}
+		} finally {
+			setLoading(false)
+		}
+	}
+
+	return (
+		<div style={styles['card']}>
+			<h3 style={styles['cardTitle']}>
+				/debug/slow-echo + AbortSignal (1s timeout)
+			</h3>
+			<button
+				style={styles['button']}
+				onClick={handleCall}
+				disabled={loading}
+			>
+				{loading ? 'Waiting...' : 'Call with Timeout'}
+			</button>
+			{result && (
+				<div style={styles['result']}>
+					<strong>Result:</strong> {JSON.stringify(result.result)}
+					<br />
+					<strong>Time:</strong> {result.time}
+				</div>
+			)}
+			{error && <div style={styles['error']}>Error: {error}</div>}
+		</div>
+	)
+}
+
+// Card for event listener
+function EventListenerCard() {
+	const [listening, setListening] = useState(false)
+	const [events, setEvents] = useState<{ name: string; data: unknown }[]>([])
+	const [eventName, setEventName] = useState('my-event')
+	const [cancelFn, setCancelFn] = useState<(() => void) | null>(null)
+
+	const handleStart = () => {
+		try {
+			const client = getRpcClient()
+			const cancel = client.onEvent(eventName, (...args) => {
+				setEvents((prev) => [...prev, { name: eventName, data: args }])
+			})
+			setCancelFn(() => cancel)
+			setListening(true)
+		} catch (err) {
+			console.error('Failed to start listening:', err)
+		}
+	}
+
+	const handleStop = () => {
+		if (cancelFn) {
+			cancelFn()
+			setCancelFn(null)
+		}
+		setListening(false)
+	}
+
+	const handleClear = () => {
+		setEvents([])
+	}
+
+	return (
+		<div style={styles['card']}>
+			<h3 style={styles['cardTitle']}>Event Listener</h3>
+			<div style={styles['inputGroup']}>
+				<label style={styles['label']}>Event Name</label>
+				<input
+					type="text"
+					style={styles['input']}
+					value={eventName}
+					onChange={(e) => setEventName(e.target.value)}
+				/>
+			</div>
+			<div style={styles['buttonRow']}>
+				{!listening ? (
+					<button style={styles['button']} onClick={handleStart}>
+						Start Listening
+					</button>
+				) : (
+					<button
+						style={{
+							...styles['button'],
+							...styles['cancelButton'],
+						}}
+						onClick={handleStop}
+					>
+						Stop Listening
+					</button>
+				)}
+				<button style={styles['button']} onClick={handleClear}>
+					Clear
+				</button>
+			</div>
+			{events.length > 0 && (
+				<div style={styles['eventLog']}>
+					<strong>Events:</strong>
+					{events.map((e, i) => (
+						<div key={i}>
+							- &quot;{e.name}&quot;: {JSON.stringify(e.data)}
+						</div>
+					))}
+				</div>
+			)}
+		</div>
+	)
+}
+
+export function RpcDebugPage() {
+	return (
+		<div style={styles['container']}>
+			<h1 style={styles['pageTitle']}>RPC Debug Examples</h1>
+			<p style={styles['subtitle']}>Test custom RPC capabilities</p>
+
+			<div style={styles['grid']}>
+				<InputCallCard
+					title="/debug/echo"
+					inputFields={[{ label: 'text', defaultValue: 'hello' }]}
+					onCall={async ([text]) => {
+						const client = getRpcClient()
+						const start = Date.now()
+						const result = await client.call<string>(
+							'/debug/echo',
+							{},
+							text
+						)
+						return { result, time: `${Date.now() - start}ms` }
+					}}
+				/>
+
+				<InputCallCard
+					title="/debug/add"
+					inputFields={[
+						{ label: 'a', defaultValue: '21' },
+						{ label: 'b', defaultValue: '21' },
+					]}
+					onCall={async ([a, b]) => {
+						const client = getRpcClient()
+						const start = Date.now()
+						const result = await client.call<number>(
+							'/debug/add',
+							{},
+							Number(a),
+							Number(b)
+						)
+						return { result, time: `${Date.now() - start}ms` }
+					}}
+				/>
+
+				<StreamCard title="/debug/stream-numbers" />
+
+				<CallCard
+					title="/debug/server-time"
+					onCall={async () => {
+						const client = getRpcClient()
+						const start = Date.now()
+						const result = await client.call<{
+							clientId: string
+							time: string
+						}>('/debug/server-time', {})
+						return { result, time: `${Date.now() - start}ms` }
+					}}
+				/>
+
+				<AbortSignalCard />
+
+				<InputCallCard
+					title="/debug/trigger-event"
+					inputFields={[
+						{ label: 'event name', defaultValue: 'my-event' },
+					]}
+					onCall={async ([name]) => {
+						const client = getRpcClient()
+						const start = Date.now()
+						const result = await client.call<{
+							triggered: boolean
+						}>('/debug/trigger-event', {}, name)
+						return { result, time: `${Date.now() - start}ms` }
+					}}
+				/>
+
+				<EventListenerCard />
+			</div>
+		</div>
+	)
+}
+
+const styles: Record<string, React.CSSProperties> = {
+	container: {
+		padding: '24px',
+		maxWidth: '1200px',
+		margin: '0 auto',
+	},
+	pageTitle: {
+		fontSize: '28px',
+		fontWeight: 'bold',
+		marginBottom: '8px',
+	},
+	subtitle: {
+		fontSize: '16px',
+		color: '#666',
+		marginBottom: '24px',
+	},
+	grid: {
+		display: 'grid',
+		gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+		gap: '16px',
+	},
+	card: {
+		border: '1px solid #e0e0e0',
+		borderRadius: '8px',
+		padding: '16px',
+		backgroundColor: '#fff',
+	},
+	cardTitle: {
+		fontSize: '14px',
+		fontWeight: 'bold',
+		marginBottom: '12px',
+		fontFamily: 'monospace',
+	},
+	inputRow: {
+		display: 'flex',
+		gap: '12px',
+		marginBottom: '12px',
+	},
+	inputGroup: {
+		display: 'flex',
+		flexDirection: 'column',
+		gap: '4px',
+		flex: 1,
+	},
+	label: {
+		fontSize: '12px',
+		color: '#666',
+	},
+	input: {
+		padding: '8px',
+		border: '1px solid #ccc',
+		borderRadius: '4px',
+		fontSize: '14px',
+	},
+	buttonRow: {
+		display: 'flex',
+		gap: '8px',
+		marginBottom: '12px',
+	},
+	button: {
+		padding: '8px 16px',
+		backgroundColor: '#007AFF',
+		color: '#fff',
+		border: 'none',
+		borderRadius: '4px',
+		cursor: 'pointer',
+		fontSize: '14px',
+	},
+	cancelButton: {
+		backgroundColor: '#FF3B30',
+	},
+	result: {
+		marginTop: '12px',
+		padding: '8px',
+		backgroundColor: '#f5f5f5',
+		borderRadius: '4px',
+		fontSize: '12px',
+		fontFamily: 'monospace',
+		whiteSpace: 'pre-wrap',
+	},
+	error: {
+		marginTop: '12px',
+		padding: '8px',
+		backgroundColor: '#fff0f0',
+		borderRadius: '4px',
+		fontSize: '12px',
+		color: '#FF3B30',
+		fontFamily: 'monospace',
+	},
+	progress: {
+		marginTop: '12px',
+		fontSize: '14px',
+		fontFamily: 'monospace',
+	},
+	chunk: {
+		marginLeft: '4px',
+		color: '#007AFF',
+	},
+	eventLog: {
+		marginTop: '12px',
+		padding: '8px',
+		backgroundColor: '#f5f5f5',
+		borderRadius: '4px',
+		fontSize: '12px',
+		fontFamily: 'monospace',
+		maxHeight: '150px',
+		overflowY: 'auto',
+	},
+}

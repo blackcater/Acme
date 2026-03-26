@@ -2,11 +2,22 @@ import { contextBridge } from 'electron'
 
 import { electronAPI } from '@electron-toolkit/preload'
 
-const api = {}
+import { ElectronRpcClient } from '../shared/rpc/electron'
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
+// Lazy-initialized RPC client
+let rpcClient: ElectronRpcClient | null = null
+
+const api = {
+	// Factory function to create/retrieve RPC client
+	// Called by renderer with window's webContents
+	getRpcClient: (webContents: Electron.WebContents) => {
+		if (!rpcClient) {
+			rpcClient = new ElectronRpcClient(webContents)
+		}
+		return rpcClient
+	},
+}
+
 if (process.contextIsolated) {
 	try {
 		contextBridge.exposeInMainWorld('electron', electronAPI)
@@ -14,9 +25,4 @@ if (process.contextIsolated) {
 	} catch (error) {
 		console.error(error)
 	}
-} else {
-	// @ts-ignore (define in dts)
-	window.electron = electronAPI
-	// @ts-ignore (define in dts)
-	window.api = api
 }

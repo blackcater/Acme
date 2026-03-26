@@ -3,6 +3,7 @@ import { createRootRoute, createRoute } from '@tanstack/react-router'
 import { RootComponent } from './routes/__root'
 import { ChatPage } from './routes/chat'
 import { HomePage } from './routes/index'
+import { RpcDebugPage } from './routes/rpc-debug'
 import { SettingsPage } from './routes/settings'
 
 // Root route
@@ -31,9 +32,17 @@ export const chatRoute = createRoute({
 	component: ChatPage,
 })
 
+// RPC Debug route
+export const rpcDebugRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: '/rpc-debug',
+	component: RpcDebugPage,
+})
+
 // Create route tree
 export const routeTree = rootRoute.addChildren([
 	homeRoute,
 	settingsRoute,
 	chatRoute,
+	rpcDebugRoute,
 ])
