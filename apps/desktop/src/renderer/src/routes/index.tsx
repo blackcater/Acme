@@ -14,7 +14,7 @@ export function HomePage() {
 	}
 
 	return (
-		<div className="flex h-screen w-screen overflow-hidden">
+		<div className="flex h-screen w-screen overflow-hidden bg-background">
 			{/* Left Sidebar - Collapsible */}
 			<LeftSidebar
 				isCollapsed={sidebarCollapsed}
