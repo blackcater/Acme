@@ -20,7 +20,7 @@ export function TopBar({ className }: TopBarProps) {
 			{/* Right side: Plus badge */}
 			<Badge variant="default" className="gap-1">
 				<Plus className="h-3 w-3" />
-				Plus
+				获取 Plus
 			</Badge>
 		</header>
 	)
