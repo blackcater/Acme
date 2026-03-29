@@ -23,11 +23,7 @@ export class HttpRpcServer implements RpcServer {
 		this.#setupSSERoutes()
 	}
 
-	async #handleRPC(
-		path: string,
-		args: unknown[],
-		ctx: Rpc.RequestContext
-	) {
+	async #handleRPC(path: string, args: unknown[], ctx: Rpc.RequestContext) {
 		const handler = this.#handlers.get(path)
 
 		if (!handler) {
