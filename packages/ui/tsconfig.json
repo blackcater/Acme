@@ -1,7 +1,6 @@
 {
   "extends": "@acme-ai/tsconfig/react-lib.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
       "@acme-ai/ui/*": ["./src/*"]
     }

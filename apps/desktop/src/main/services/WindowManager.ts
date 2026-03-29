@@ -37,6 +37,7 @@ export class WindowManager {
 			minHeight: 480,
 			visualEffectState: 'active',
 			vibrancy: 'under-window',
+			transparent: true,
 			show: false,
 			webPreferences: buildWebPreferences({
 				preload: join(__dirname, '../preload/index.js'),

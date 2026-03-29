@@ -12,17 +12,17 @@ interface AppShellProps {
 
 export function AppShell({
 	children,
-	enableBlur = false,
-	enableNoise = false,
-}: AppShellProps): React.JSX.Element {
+	enableBlur = true,
+	enableNoise = true,
+}: Readonly<AppShellProps>): React.JSX.Element {
 	return (
-		<div
-			className={cn(
-				'bg-background flex h-screen flex-col',
-				isElectron && enableBlur && 'backdrop-blur-xl',
-				isElectron && enableNoise && 'bg-noise'
-			)}
-		>
+		<div className={cn('bg-background flex h-screen flex-col')}>
+			<div
+				className={cn(
+					isElectron && enableBlur && 'backdrop-blur-xl',
+					isElectron && enableNoise && 'bg-noise'
+				)}
+			></div>
 			<AppHeader />
 			<div className="flex flex-1 overflow-hidden">
 				<AppSidebar />
