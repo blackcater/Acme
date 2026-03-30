@@ -5,7 +5,7 @@ import osLocale from 'os-locale'
 import {
 	checkLocale,
 	DEFAULT_LOCALE,
-	LOCALE_MAP,
+	normalizeLocale,
 	RESOURCES,
 	type SupportedLocale,
 } from '@/i18n'
@@ -14,7 +14,7 @@ export const i18n: I18nInstance = i18next.createInstance()
 
 export function detectSystemLocale(): SupportedLocale {
 	const rawLocale = osLocale()
-	return LOCALE_MAP[rawLocale] ?? DEFAULT_LOCALE
+	return normalizeLocale(rawLocale, DEFAULT_LOCALE) as SupportedLocale
 }
 
 export function changeLanguage(locale: string) {

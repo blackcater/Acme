@@ -3,7 +3,7 @@ import { ipcMain } from 'electron'
 import { Container } from '@/shared/di'
 import { ElectronRpcServer } from '@/shared/rpc'
 
-import { detectSystemLocale, initI18n } from './lib/i18n'
+import { detectSystemLocale, i18n, initI18n } from './lib/i18n'
 import { AppStore } from './lib/store'
 import { WindowManager, WindowRegistry } from './services'
 
@@ -26,6 +26,9 @@ async function prepareI18n() {
 
 	if (!storedLocale) {
 		storedLocale = detectSystemLocale()
+		// Set locale to store
+		store.locale = storedLocale
+		i18n.changeLanguage(storedLocale)
 	}
 
 	await initI18n(storedLocale)

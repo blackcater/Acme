@@ -13,8 +13,12 @@ const router = createRouter()
 // Initialize i18n before rendering
 async function bootstrap() {
 	// Get stored locale from main process via RPC
-	const storedLocale = await window.api.store.getLocale()
-	await initRendererI18n(storedLocale || 'en')
+	try {
+		const storedLocale = await window.api.store.getLocale()
+		await initRendererI18n(storedLocale || 'en')
+	} catch (err) {
+		console.error('Error getting locale:', err)
+	}
 
 	createRoot(document.getElementById('root')!).render(
 		<StrictMode>

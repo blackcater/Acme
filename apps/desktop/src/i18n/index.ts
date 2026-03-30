@@ -27,8 +27,11 @@ export const LOCALE_LABELS: Record<SupportedLocale, string> = {
 	'zh-TW': '繁體中文',
 }
 
-export function normalizeLocale(locale: string): string {
-	return LOCALE_MAP[locale] ?? locale
+export function normalizeLocale(
+	locale: string,
+	fallbackLocale?: string
+): string {
+	return LOCALE_MAP[locale] ?? fallbackLocale ?? locale
 }
 
 export function isSupportedLocale(locale: string): locale is SupportedLocale {
