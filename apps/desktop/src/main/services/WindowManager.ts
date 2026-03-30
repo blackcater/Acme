@@ -9,6 +9,7 @@ import electronWindowState, { type State } from 'electron-window-state'
 import { Container } from '@/shared/di'
 import icon from '~/resources/icon.png?asset'
 
+import { AppStore } from '../lib/store'
 import { mainLog } from '../lib/logger'
 import { platform } from '../lib/utils'
 import { buildWebPreferences } from '../lib/web-preferences'
@@ -27,19 +28,16 @@ interface CreateWindowOptions {
 
 export class WindowManager {
 	readonly #registry: WindowRegistry
+	readonly #store: AppStore
 
 	constructor() {
 		this.#registry = Container.inject(WindowRegistry)
+		this.#store = Container.inject(AppStore)
 	}
-
-	createWelcomeWindow() {}
-
-	createVaultWindow() {}
-
-	createChatPopupWindow() {}
 
 	#createDefaultWindow(
 		hashRoute: string,
+		windowName: string,
 		options: CreateWindowOptions
 	): BrowserWindow {
 		mainLog.info(`create window with hashRoute: ${hashRoute}`)
@@ -88,6 +86,8 @@ export class WindowManager {
 
 		const win = new BrowserWindow(opts)
 
+		this.#registry.registerWindow(win, windowName)
+
 		windowState?.manage(win)
 
 		win.on('ready-to-show', () => {
@@ -104,5 +104,29 @@ export class WindowManager {
 		}
 
 		return win
+	}
+
+	createWelcomeWindow(): BrowserWindow {
+		return this.#createDefaultWindow('/welcome', 'welcome', {
+			width: 900,
+			height: 650,
+			enableStateManagement: false,
+		})
+	}
+
+	createVaultWindow(vaultId: string): BrowserWindow {
+		return this.#createDefaultWindow(`/vault/${vaultId}`, `vault-${vaultId}`, {
+			enableStateManagement: true,
+			defaultWidth: 1200,
+			defaultHeight: 800,
+		})
+	}
+
+	createChatPopupWindow(threadId: string): BrowserWindow {
+		return this.#createDefaultWindow(`/chat-popup/${threadId}`, `popup-${threadId}`, {
+			width: 600,
+			height: 500,
+			enableStateManagement: false,
+		})
 	}
 }
