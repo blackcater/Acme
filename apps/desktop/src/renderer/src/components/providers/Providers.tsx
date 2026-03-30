@@ -1,8 +1,8 @@
 import { TooltipProvider } from '@acme-ai/ui/foundation'
 import { Provider as JotaiProvider } from 'jotai/react'
 
-import { ThemeProvider } from './ThemeProvider'
 import { I18nProvider } from './I18nProvider'
+import { ThemeProvider } from './ThemeProvider'
 
 export interface ProvidersProps {
 	children: React.ReactNode

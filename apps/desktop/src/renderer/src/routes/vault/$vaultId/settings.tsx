@@ -1,7 +1,11 @@
-import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
-import { LOCALE_LABELS, SUPPORTED_LOCALES } from '../../../../../i18n/shared-config'
+import { createFileRoute } from '@tanstack/react-router'
+
+import {
+	LOCALE_LABELS,
+	SUPPORTED_LOCALES,
+} from '../../../../../i18n/shared-config'
 
 export const Route = createFileRoute('/vault/$vaultId/settings')({
 	component: SettingsPage,
@@ -10,7 +14,9 @@ export const Route = createFileRoute('/vault/$vaultId/settings')({
 function SettingsPage() {
 	const { t, i18n } = useTranslation('settings')
 
-	const handleLocaleChange = async (locale: (typeof SUPPORTED_LOCALES)[number]) => {
+	const handleLocaleChange = async (
+		locale: (typeof SUPPORTED_LOCALES)[number]
+	) => {
 		await i18n.changeLanguage(locale)
 		// Persist to store via IPC
 		window.api.store.setLocale(locale)
@@ -22,7 +28,7 @@ function SettingsPage() {
 			<div className="space-y-4">
 				<div className="rounded-lg border p-4">
 					<h2 className="mb-2 font-medium">{t('language.title')}</h2>
-					<p className="mb-2 text-sm text-muted-foreground">
+					<p className="text-muted-foreground mb-2 text-sm">
 						{t('language.description')}
 					</p>
 					<div className="flex gap-2">

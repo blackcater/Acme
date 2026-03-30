@@ -1,5 +1,5 @@
-import { AppStore } from './lib/store'
 import { initI18n, changeLanguage } from '../i18n'
+import { AppStore } from './lib/store'
 
 export async function initMainI18n(): Promise<void> {
 	const appStore = new AppStore()

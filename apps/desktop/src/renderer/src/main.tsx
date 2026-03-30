@@ -4,8 +4,8 @@ import { RouterProvider } from '@tanstack/react-router'
 import { createRoot } from 'react-dom/client'
 
 import { Providers } from './components/providers'
-import { createRouter } from './router'
 import { initRendererI18n } from './i18n/client'
+import { createRouter } from './router'
 import '@acme-ai/ui/styles/globals.css'
 
 const router = createRouter()

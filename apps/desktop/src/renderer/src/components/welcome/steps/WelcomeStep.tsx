@@ -10,7 +10,9 @@ export const WelcomeStep: FC<Props> = ({ onNext }) => {
 
 	return (
 		<div className="flex h-full flex-col items-center justify-center text-center">
-			<h1 className="mb-4 text-3xl font-bold">{t('welcomeStep.title')}</h1>
+			<h1 className="mb-4 text-3xl font-bold">
+				{t('welcomeStep.title')}
+			</h1>
 			<p className="text-muted-foreground mb-8 max-w-md">
 				{t('welcomeStep.description')}
 			</p>

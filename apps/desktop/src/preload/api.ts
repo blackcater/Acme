@@ -12,7 +12,8 @@ const store = {
 	set: (key: 'firstLaunchDone', value: boolean): Promise<void> =>
 		rpc.call('store/set', key, value),
 	getLocale: (): Promise<string> => rpc.call('locale/get'),
-	setLocale: (locale: string): Promise<void> => rpc.call('locale/set', locale),
+	setLocale: (locale: string): Promise<void> =>
+		rpc.call('locale/set', locale),
 }
 
 const api: API = {

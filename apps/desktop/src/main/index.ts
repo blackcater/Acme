@@ -1,8 +1,8 @@
 import { app } from 'electron'
 
 import { registerHandlers } from './handlers'
-import { launch } from './launch'
 import { initMainI18n } from './i18n'
+import { launch } from './launch'
 import { mainLog } from './lib/logger'
 import { is } from './lib/utils'
 import { prepare } from './prepare'

@@ -16,7 +16,9 @@ const resources = {
 }
 
 export async function initI18n(locale: string): Promise<typeof i18n> {
-	const detectedLocale = SUPPORTED_LOCALES.includes(locale as (typeof SUPPORTED_LOCALES)[number])
+	const detectedLocale = SUPPORTED_LOCALES.includes(
+		locale as (typeof SUPPORTED_LOCALES)[number]
+	)
 		? locale
 		: DEFAULT_LOCALE
 

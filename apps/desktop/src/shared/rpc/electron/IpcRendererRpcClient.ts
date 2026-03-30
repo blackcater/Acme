@@ -119,11 +119,13 @@ export class IpcRendererRpcClient implements RpcClient {
 
 			this.#pendingCalls.set(invokeId, {
 				resolve: (...resolveArgs: unknown[]) => {
-					if (signal) signal.removeEventListener('abort', abortHandler)
+					if (signal)
+						signal.removeEventListener('abort', abortHandler)
 					resolve(resolveArgs[0] as T)
 				},
 				reject: (...rejectArgs: unknown[]) => {
-					if (signal) signal.removeEventListener('abort', abortHandler)
+					if (signal)
+						signal.removeEventListener('abort', abortHandler)
 					reject(rejectArgs[0])
 				},
 			})
