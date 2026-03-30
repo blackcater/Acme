@@ -5,6 +5,7 @@ import { ChatPage } from './routes/chat'
 import { HomePage } from './routes/index'
 import { RpcDebugPage } from './routes/rpc-debug'
 import { SettingsPage } from './routes/settings'
+import { WelcomePage } from './routes/welcome'
 
 // Root route
 export const rootRoute = createRootRoute({
@@ -39,10 +40,18 @@ export const rpcDebugRoute = createRoute({
 	component: RpcDebugPage,
 })
 
+// Welcome route
+export const welcomeRoute = createRoute({
+	getParentRoute: () => rootRoute,
+	path: '/welcome',
+	component: WelcomePage,
+})
+
 // Create route tree
 export const routeTree = rootRoute.addChildren([
 	homeRoute,
 	settingsRoute,
 	chatRoute,
 	rpcDebugRoute,
+	welcomeRoute,
 ])
