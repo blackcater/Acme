@@ -1,12 +1,12 @@
-import { useAtomValue } from 'jotai'
 import { ScrollArea } from '@acme-ai/ui/foundation'
+import { useAtomValue } from 'jotai'
 
+import { viewModeAtom } from './atoms/thread-atoms'
+import { FlatView } from './sidebar/FlatView'
+import { FolderView } from './sidebar/FolderView'
+import { PinnedSection } from './sidebar/PinnedSection'
 import { SidebarFooter } from './sidebar/SidebarFooter'
 import { SidebarHeader } from './sidebar/SidebarHeader'
-import { PinnedSection } from './sidebar/PinnedSection'
-import { FolderView } from './sidebar/FolderView'
-import { FlatView } from './sidebar/FlatView'
-import { viewModeAtom } from './atoms/thread-atoms'
 
 export function AppSidebar(): React.JSX.Element {
 	const viewMode = useAtomValue(viewModeAtom)
