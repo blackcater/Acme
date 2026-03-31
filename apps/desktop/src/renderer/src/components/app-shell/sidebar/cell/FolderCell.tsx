@@ -68,7 +68,9 @@ export function FolderCell({
 				className={cn(
 					'hover:bg-black/10 dark:hover:bg-white/10',
 					isDragging && 'cursor-grabbing opacity-50',
-					draggable && !isDragging && 'cursor-grab',
+					draggable &&
+						!isDragging &&
+						'cursor-grab active:cursor-grabbing',
 					className
 				)}
 				onClick={() => onToggle(id)}
