@@ -5,15 +5,17 @@ import { cn } from '@acme-ai/ui/lib/utils'
 export interface CellProps {
 	className?: string
 	children: React.ReactNode
+	onClick?: (e: React.MouseEvent) => void
 }
 
-export function Cell({ className, children }: Readonly<CellProps>) {
+export function Cell({ className, children, onClick }: Readonly<CellProps>) {
 	return (
 		<div
 			className={cn(
 				'group text-secondary-foreground flex h-8 items-center gap-1 rounded-md px-2.5 text-sm transition-colors',
 				className
 			)}
+			onClick={onClick}
 		>
 			{children}
 		</div>
