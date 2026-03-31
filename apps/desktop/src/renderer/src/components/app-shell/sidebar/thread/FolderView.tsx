@@ -7,7 +7,7 @@ import {
 	threadsAtom,
 	openFoldersAtom,
 } from '../../atoms/thread-atoms'
-import { ProjectCell } from '../cell/ProjectCell'
+import { FolderCell } from '../cell/FolderCell'
 import { ThreadCell } from '../cell/ThreadCell'
 
 export function FolderView() {
@@ -141,7 +141,7 @@ export function FolderView() {
 						onDrop={(e) => handleDrop(e, folder.id)}
 						onDragEnd={handleDragEnd}
 					>
-						<ProjectCell
+						<FolderCell
 							id={folder.id}
 							title={folder.title}
 							isExpanded={isOpen}

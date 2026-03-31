@@ -22,17 +22,23 @@ export function ThreadTitleCell({
 	onAdd,
 	...props
 }: Readonly<Props>) {
-	const isAllFolderExpanded = true // TODO: 从 state 中获取
+	const isAllProjectsExpanded = true // TODO: 从 state 中获取
+	const isAllProjectsCollapsed = false // TODO: 从 state 中获取
 
 	return (
 		<TitleCell title={title} {...props}>
-			{isAllFolderExpanded && (
+			{isAllProjectsExpanded && (
 				<Button
 					variant="ghost"
 					size="icon-sm"
 					aria-label="Collapse All"
 				>
 					<HugeiconsIcon icon={CollapseIcon} className="size-3.5" />
+				</Button>
+			)}
+			{isAllProjectsCollapsed && (
+				<Button variant="ghost" size="icon-sm" aria-label="Expand All">
+					<HugeiconsIcon icon={ExpandIcon} className="size-3.5" />
 				</Button>
 			)}
 			<Button

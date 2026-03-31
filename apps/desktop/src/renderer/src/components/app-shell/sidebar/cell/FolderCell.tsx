@@ -18,7 +18,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 
 import { Cell, CellIcon, CellName, CellActions } from './Cell'
 
-export interface ProjectCellProps {
+export interface FolderCellProps {
 	id: string
 	title: string
 	isExpanded: boolean
@@ -31,7 +31,7 @@ export interface ProjectCellProps {
 	isDragging?: boolean
 }
 
-export function ProjectCell({
+export function FolderCell({
 	id,
 	title,
 	isExpanded,
@@ -42,7 +42,7 @@ export function ProjectCell({
 	className,
 	dropPosition,
 	isDragging,
-}: Readonly<ProjectCellProps>) {
+}: Readonly<FolderCellProps>) {
 	return (
 		<div className="relative">
 			{/* Drop indicator line */}
@@ -93,7 +93,7 @@ export function ProjectCell({
 							>
 								<HugeiconsIcon
 									icon={MoreHorizontalIcon}
-									className="h-3 w-3"
+									className="size-3.5"
 								/>
 							</Button>
 						</DropdownMenuTrigger>
@@ -117,7 +117,7 @@ export function ProjectCell({
 					>
 						<HugeiconsIcon
 							icon={PlusSignIcon}
-							className="h-3 w-3"
+							className="size-3.5"
 						/>
 					</Button>
 				</CellActions>

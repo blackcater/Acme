@@ -9,7 +9,11 @@ export function ProjectSection() {
 	const [viewMode, setViewMode] = useAtom(viewModeAtom)
 
 	const handleSort = () => {
-		setViewMode('flat')
+		if (viewMode === 'folder') {
+			setViewMode('flat')
+		} else if (viewMode === 'flat') {
+			setViewMode('folder')
+		}
 	}
 
 	const handleAddFolder = () => {
