@@ -9,11 +9,11 @@ export const viewModeAtom = atom<'folder' | 'flat'>('folder')
 // Folder expanded state - persisted to localStorage
 export const openFoldersAtom = atomWithStorage<Set<string>>(
   'sidebar-open-folders',
-  new Set()
+  new Set<string>()
 )
 
 // Pinned threads (just IDs)
-export const pinnedThreadsAtom = atom<Set<string>>(new Set())
+export const pinnedThreadsAtom = atom<Set<string>>(new Set<string>())
 
 // Mock data for development - will be replaced with real data later
 export const threadsAtom = atom<Thread[]>([
