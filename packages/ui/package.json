@@ -12,6 +12,7 @@
     "./styles/globals.css": "./src/styles/globals.css"
   },
   "dependencies": {
+    "@chenglou/pretext": "^0.0.3",
     "@fontsource-variable/inter": "^5.2.8",
     "@fontsource/jetbrains-mono": "^5.2.8",
     "@fontsource/poppins": "^5.2.7",

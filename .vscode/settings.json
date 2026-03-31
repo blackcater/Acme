@@ -9,6 +9,9 @@
   "eslint.enable": false,
   "prettier.enabled": false,
   "oxc.enable": true,
+  "tailwindCSS.experimental.configFile": {
+    "packages/ui/src/styles/globals.css": "**/src/**"
+  },
   // JavaScript
   "[javascript]": {
     "editor.defaultFormatter": "oxc.oxc-vscode",
