@@ -83,8 +83,8 @@ export function FolderCell({
 					<HugeiconsIcon
 						icon={ArrowRight01Icon}
 						className={cn(
-							"absolute size-3.5 opacity-0 transition-opacity group-hover:opacity-100 transition-transform duration-200",
-							isExpanded ? "rotate-90" : "rotate-0"
+							'absolute size-3.5 opacity-0 transition-opacity transition-transform duration-200 group-hover:opacity-100',
+							isExpanded ? 'rotate-90' : 'rotate-0'
 						)}
 					/>
 					{/* 实际的 folder 图标 */}
