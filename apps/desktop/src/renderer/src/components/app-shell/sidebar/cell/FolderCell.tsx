@@ -62,7 +62,10 @@ export function FolderCell({
 				{/* 文件夹图标 - 始终显示 */}
 				<HugeiconsIcon
 					icon={isExpanded ? Folder02Icon : Folder01Icon}
-					className="text-foreground size-3.5"
+					className={cn(
+						'text-foreground size-3.5',
+						'opacity-100 group-hover:opacity-0'
+					)}
 				/>
 				{/* 展开箭头 - 仅在 hover 时显示 */}
 				<HugeiconsIcon
