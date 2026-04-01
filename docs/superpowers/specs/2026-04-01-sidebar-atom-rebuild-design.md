@@ -91,14 +91,11 @@ export const isAllProjectsCollapsedAtom = atom((get) => {
 import { atom } from 'jotai'
 import type { Thread } from '../types/thread'
 
-// View mode: 'folder' | 'flat'
-export const viewModeAtom = atom<'folder' | 'flat'>('folder')
+// All threads - base data
+export const threadsAtom = atom<Thread[]>([])
 
 // Pinned thread IDs - ordered array
 export const pinnedThreadIdsAtom = atom<string[]>([])
-
-// All threads - base data
-export const threadsAtom = atom<Thread[]>([])
 
 // Derived: pinned threads (maintains order from pinnedThreadIdsAtom)
 export const pinnedThreadsAtom = atom((get) => {
