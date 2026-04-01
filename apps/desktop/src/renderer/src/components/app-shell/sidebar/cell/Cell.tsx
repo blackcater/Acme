@@ -1,54 +1,29 @@
-import React, { type DragEvent } from 'react'
+import React from 'react'
 
 import { cn } from '@acme-ai/ui'
 
-export interface CellProps {
-	className?: string
-	children: React.ReactNode
-	draggable?: boolean
-	onDragStart?: (e: DragEvent) => void
-	onDragEnd?: (e: DragEvent) => void
-	onClick?: (e: React.MouseEvent) => void
-	onMouseEnter?: (e: React.MouseEvent) => void
-	onMouseLeave?: (e: React.MouseEvent) => void
-}
+export interface CellProps extends React.HTMLAttributes<HTMLDivElement> {}
 
-export function Cell({
-	className,
-	children,
-	draggable,
-	onDragStart,
-	onDragEnd,
-	onClick,
-	onMouseEnter,
-	onMouseLeave,
-}: Readonly<CellProps>) {
+export function Cell({ className, children, ...props }: Readonly<CellProps>) {
 	return (
 		<div
 			className={cn(
 				'group text-secondary-foreground flex h-8 items-center gap-1 rounded-md px-2.5 text-sm transition-colors',
 				className
 			)}
-			draggable={draggable}
-			onDragStart={onDragStart}
-			onDragEnd={onDragEnd}
-			onClick={onClick}
-			onMouseEnter={onMouseEnter}
-			onMouseLeave={onMouseLeave}
+			{...props}
 		>
 			{children}
 		</div>
 	)
 }
 
-export interface CellIconProps extends CellProps {
-	onClick?: (e: React.MouseEvent) => void
-}
+export interface CellIconProps extends React.HTMLAttributes<HTMLButtonElement> {}
 
 export function CellIcon({
 	className,
 	children,
-	onClick,
+	...props
 }: Readonly<CellIconProps>) {
 	return (
 		<button
@@ -56,28 +31,41 @@ export function CellIcon({
 				'mr-1.5 flex shrink-0 items-center justify-start',
 				className
 			)}
-			onClick={onClick}
+			{...props}
 		>
 			{children}
 		</button>
 	)
 }
 
-export function CellName({ className, children }: Readonly<CellProps>) {
+export interface CellNameProps extends React.HTMLAttributes<HTMLSpanElement> {}
+
+export function CellName({
+	className,
+	children,
+	...props
+}: Readonly<CellNameProps>) {
 	return (
-		<span className={cn('flex-1 truncate text-xs', className)}>
+		<span className={cn('flex-1 truncate text-xs', className)} {...props}>
 			{children}
 		</span>
 	)
 }
 
-export function CellActions({ className, children }: Readonly<CellProps>) {
+export interface CellActionsProps extends React.HTMLAttributes<HTMLDivElement> {}
+
+export function CellActions({
+	className,
+	children,
+	...props
+}: Readonly<CellActionsProps>) {
 	return (
 		<div
 			className={cn(
 				'flex items-center gap-1 transition-opacity',
 				className
 			)}
+			{...props}
 		>
 			{children}
 		</div>

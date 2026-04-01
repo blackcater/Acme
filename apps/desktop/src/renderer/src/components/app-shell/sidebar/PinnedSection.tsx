@@ -1,5 +1,5 @@
 import { cn } from '@acme-ai/ui'
-import { DragDropProvider, DragOverlay, PointerSensor } from '@dnd-kit/react'
+import { DragDropProvider, DragOverlay } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
 import { useAtomValue, useAtom } from 'jotai'
 
@@ -52,7 +52,7 @@ export function PinnedSection() {
 	}
 
 	return (
-		<DragDropProvider sensors={[PointerSensor]}>
+		<DragDropProvider>
 			<section className="flex flex-col gap-1 px-2 py-2">
 				<DragOverlay>
 					{(source) => {

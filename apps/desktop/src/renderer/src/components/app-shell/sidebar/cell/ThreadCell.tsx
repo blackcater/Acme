@@ -10,25 +10,19 @@ import type { Thread } from '../../types/thread'
 import { Cell, CellIcon, CellName, CellActions } from './Cell'
 
 export interface ThreadCellProps {
+	className?: string
 	thread: Thread
 	isPinned?: boolean
 	onTogglePin?: (id: string) => void
 	onDelete?: (id: string) => void
-	draggable?: boolean
-	onDragStart?: (e: DragEvent) => void
-	onDragEnd?: (e: DragEvent) => void
-	className?: string
 }
 
 export function ThreadCell({
+	className,
 	thread,
 	isPinned = false,
 	onTogglePin,
 	onDelete,
-	draggable = false,
-	onDragStart,
-	onDragEnd,
-	className,
 }: Readonly<ThreadCellProps>) {
 	const [isConfirming, setIsConfirming] = useState(false)
 
@@ -48,9 +42,7 @@ export function ThreadCell({
 				'hover:bg-black/10 dark:hover:bg-white/10',
 				className
 			)}
-			draggable={draggable}
-			{...(onDragStart != null && { onDragStart })}
-			{...(onDragEnd != null && { onDragEnd })}
+			onClick={(e) => e.stopPropagation()}
 			onMouseLeave={() => isConfirming && setIsConfirming(false)}
 		>
 			{/* Left icon area: show pin icon */}

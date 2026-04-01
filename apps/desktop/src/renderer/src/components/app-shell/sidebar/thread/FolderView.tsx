@@ -1,5 +1,5 @@
 import { cn } from '@acme-ai/ui'
-import { DragOverlay } from '@dnd-kit/react'
+import { DragDropProvider, DragOverlay } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
 import { useAtom, useAtomValue } from 'jotai'
 
@@ -52,6 +52,7 @@ function SortableFolder({
 				id={folder.id}
 				title={folder.title}
 				isExpanded={isOpen}
+				isDragging={isDragging}
 				onToggle={onToggle}
 			/>
 			<div
@@ -63,11 +64,7 @@ function SortableFolder({
 			>
 				<div style={{ overflow: 'hidden' }}>
 					{folderThreads.map((thread) => (
-						<ThreadCell
-							key={thread.id}
-							thread={thread}
-							draggable={false}
-						/>
+						<ThreadCell key={thread.id} thread={thread} />
 					))}
 				</div>
 			</div>
@@ -101,33 +98,35 @@ export function FolderView() {
 	}))
 
 	return (
-		<div className="flex flex-col gap-0.5">
-			<DragOverlay>
-				{(source) => {
-					if (!source) return null
-					const folder = folders.find((f) => f.id === source.id)
-					if (!folder) return null
-					return (
-						<FolderCell
-							id={folder.id}
-							title={folder.title}
-							isExpanded={false}
+		<DragDropProvider>
+			<div className="flex flex-col gap-0.5">
+				<DragOverlay>
+					{(source) => {
+						const folder = folders.find((f) => f.id === source.id)
+						if (!folder) return null
+						return (
+							<FolderCell
+								id={folder.id}
+								title={folder.title}
+								isExpanded={false}
+								onToggle={handleToggleFolder}
+							/>
+						)
+					}}
+				</DragOverlay>
+				{folderContents.map(
+					({ folder, threads: folderThreads }, index) => (
+						<SortableFolder
+							key={folder.id}
+							folder={folder}
+							threads={folderThreads}
+							index={index}
+							isOpen={openFolders.has(folder.id)}
 							onToggle={handleToggleFolder}
-							draggable={false}
 						/>
 					)
-				}}
-			</DragOverlay>
-			{folderContents.map(({ folder, threads: folderThreads }, index) => (
-				<SortableFolder
-					key={folder.id}
-					folder={folder}
-					threads={folderThreads}
-					index={index}
-					isOpen={openFolders.has(folder.id)}
-					onToggle={handleToggleFolder}
-				/>
-			))}
-		</div>
+				)}
+			</div>
+		</DragDropProvider>
 	)
 }
