@@ -4,19 +4,15 @@ import { useSortable } from '@dnd-kit/react/sortable'
 import { useAtom, useAtomValue } from 'jotai'
 
 import { findElementUntilRoot } from '@/shared/dom'
-import {
-	openedProjectIdsAtom,
-	pinnedThreadIdsAtom,
-	projectsAtom,
-	threadsAtom,
-} from '@renderer/atoms'
-import type { Thread } from '@renderer/types'
+import { openedProjectIdsAtom, projectTreeAtom } from '@renderer/atoms'
+import type { Project } from '@renderer/types'
+import type { Thread } from '@renderer/types/thread'
 
 import { FolderCell } from '../cell/FolderCell'
 import { ThreadCell } from '../cell/ThreadCell'
 
 interface SortableFolderProps {
-	folder: { id: string; title: string; order: number }
+	folder: Project
 	threads: Thread[]
 	index: number
 	isOpen: boolean
@@ -71,9 +67,7 @@ function SortableFolder({
 export function FolderView() {
 	const [openedProjectIds, setOpenedProjectIds] =
 		useAtom(openedProjectIdsAtom)
-	const projects = useAtomValue(projectsAtom)
-	const threads = useAtomValue(threadsAtom)
-	const pinnedThreadIds = useAtomValue(pinnedThreadIdsAtom)
+	const projectTree = useAtomValue(projectTreeAtom)
 
 	const handleToggleFolder = (folderId: string) => {
 		setOpenedProjectIds((prev: Set<string>) => {
@@ -86,13 +80,6 @@ export function FolderView() {
 			return next
 		})
 	}
-
-	const folderContents = projects.map((folder) => ({
-		folder,
-		threads: threads.filter(
-			(t) => t.projectId === folder.id && !pinnedThreadIds.includes(t.id)
-		),
-	}))
 
 	return (
 		<DragDropProvider
@@ -114,12 +101,14 @@ export function FolderView() {
 		>
 			<DragOverlay>
 				{(source) => {
-					const folder = projects.find((f) => f.id === source.id)
-					if (!folder) return null
+					const node = projectTree.find(
+						(n) => n.project.id === source.id
+					)
+					if (!node) return null
 					return (
 						<FolderCell
-							id={folder.id}
-							title={folder.title}
+							id={node.project.id}
+							title={node.project.title}
 							isExpanded={false}
 							onToggle={handleToggleFolder}
 						/>
@@ -127,14 +116,14 @@ export function FolderView() {
 				}}
 			</DragOverlay>
 			<div className="flex max-w-full flex-col gap-0.5">
-				{folderContents.map(
-					({ folder, threads: folderThreads }, index) => (
+				{projectTree.map(
+					({ project, threads: folderThreads }, index) => (
 						<SortableFolder
-							key={folder.id}
-							folder={folder}
+							key={project.id}
+							folder={project}
 							threads={folderThreads}
 							index={index}
-							isOpen={openedProjectIds.has(folder.id)}
+							isOpen={openedProjectIds.has(project.id)}
 							onToggle={handleToggleFolder}
 						/>
 					)
