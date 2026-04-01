@@ -17,7 +17,7 @@ interface SortableFolderProps {
 		title: string
 		updatedAt: Date
 		isPinned: boolean
-		folderId: string
+		projectId: string
 	}>
 	index: number
 	isOpen: boolean
@@ -91,7 +91,7 @@ export function FolderView() {
 	const folderContents = projects.map((folder) => ({
 		folder,
 		threads: threads.filter(
-			(t) => t.folderId === folder.id && !pinnedThreadIds.includes(t.id)
+			(t) => t.projectId === folder.id && !pinnedThreadIds.includes(t.id)
 		),
 	}))
 

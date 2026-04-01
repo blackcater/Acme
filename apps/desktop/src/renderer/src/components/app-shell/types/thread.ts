@@ -1,9 +1,9 @@
 export interface Thread {
 	id: string
 	title: string
+	projectId: string
 	updatedAt: Date
 	isPinned: boolean
-	folderId: string
 }
 
 export interface Folder {
@@ -18,7 +18,7 @@ export type TreeNode =
 			type: 'thread'
 			id: string
 			name: string
-			folderId: string
+			projectId: string
 			updatedAt: Date
 			isPinned: boolean
 	  }
