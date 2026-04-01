@@ -1,6 +1,8 @@
 // apps/desktop/src/renderer/src/components/app-shell/sidebar/PinnedSection.tsx
 import { useState, useCallback, useRef, type DragEvent } from 'react'
+
 import { useAtomValue, useAtom } from 'jotai'
+
 import { threadsAtom, pinnedThreadIdsAtom } from '../atoms/thread-atoms'
 import { ThreadCell } from './cell/ThreadCell'
 
@@ -36,12 +38,13 @@ export function PinnedSection() {
 
 			const rect = targetEl.getBoundingClientRect()
 			const midY = rect.top + rect.height / 2
-			const position: 'before' | 'after' = e.clientY < midY ? 'before' : 'after'
+			const position: 'before' | 'after' =
+				e.clientY < midY ? 'before' : 'after'
 
 			// 立即更新顺序
 			setPinnedThreadIds((prev) => {
 				const list = [...prev]
-				const draggedIdx = list.indexOf(draggedId)
+				const draggedIdx = list.indexOf(draggedId!)
 				const targetIdx = list.indexOf(targetId)
 				if (draggedIdx === -1 || targetIdx === -1) return prev
 				if (draggedIdx === targetIdx) return prev

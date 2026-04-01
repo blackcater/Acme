@@ -9,12 +9,16 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { useTheme } from 'next-themes'
 import { Toaster as Sonner, type ToasterProps } from 'sonner'
 
-const Toaster = ({ ...props }: ToasterProps) => {
-	const { theme = 'system' } = useTheme()
+type SonnerPropsWithoutTheme = Omit<ToasterProps, 'theme'>
+
+const Toaster = (props: SonnerPropsWithoutTheme) => {
+	const { theme: resolvedTheme } = useTheme()
+	const theme = (resolvedTheme ?? 'system') as ToasterProps['theme']
 
 	return (
+		// @ts-expect-error - theme is always defined via useTheme hook
 		<Sonner
-			theme={theme as ToasterProps['theme']}
+			theme={theme}
 			className="toaster group"
 			icons={{
 				success: (

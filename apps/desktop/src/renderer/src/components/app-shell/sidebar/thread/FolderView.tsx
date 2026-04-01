@@ -45,7 +45,8 @@ export function FolderView() {
 
 			const rect = cellEl.getBoundingClientRect()
 			const midY = rect.top + rect.height / 2
-			const position: 'before' | 'after' = e.clientY < midY ? 'before' : 'after'
+			const position: 'before' | 'after' =
+				e.clientY < midY ? 'before' : 'after'
 
 			setDropTargetId(folderId)
 			setDropPosition(position)
@@ -79,11 +80,6 @@ export function FolderView() {
 		},
 		[draggedFolderId, setFolders]
 	)
-
-	const handleDragLeave = useCallback(() => {
-		setDropTargetId(null)
-		setDropPosition(null)
-	}, [])
 
 	const handleDrop = useCallback((e: DragEvent, _targetFolderId: string) => {
 		e.preventDefault()

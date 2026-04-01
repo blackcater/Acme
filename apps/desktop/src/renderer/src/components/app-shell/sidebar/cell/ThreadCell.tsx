@@ -49,8 +49,8 @@ export function ThreadCell({
 				className
 			)}
 			draggable={draggable}
-			onDragStart={onDragStart}
-			onDragEnd={onDragEnd}
+			{...(onDragStart != null && { onDragStart })}
+			{...(onDragEnd != null && { onDragEnd })}
 			onMouseLeave={() => isConfirming && setIsConfirming(false)}
 		>
 			{/* Left icon area: show pin icon */}

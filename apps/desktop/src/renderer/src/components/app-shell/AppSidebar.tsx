@@ -1,4 +1,5 @@
 import { ScrollArea } from '@acme-ai/ui/foundation'
+
 import { PinnedSection } from './sidebar/PinnedSection'
 import { ProjectSection } from './sidebar/ProjectSection'
 import { SidebarFooter } from './sidebar/SidebarFooter'
