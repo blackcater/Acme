@@ -10,10 +10,10 @@
 renderer/src/
 ├── atoms/
 │   ├── sidebar.ts        # sidebarAtom
-│   ├── project.ts        # projectsAtom, openedProjectsAtom,
+│   ├── project.ts        # projectsAtom, openedProjectIdsAtom,
 │                         # areAllProjectsExpandedAtom, areAllProjectsCollapsedAtom
-│   └── thread.ts         # threadsAtom, sortedThreadsAtom, pinnedThreadsAtom,
-│                         # projectThreadsSelector
+│   └── thread.ts         # threadsAtom, pinnedThreadsAtom, pinnedThreadIdsAtom,
+│                         # flatThreadsAtom, projectThreadsAtom
 ├── types/
 │   ├── sidebar.ts        # SidebarState, SidebarViewMode
 │   ├── thread.ts         # Thread
@@ -69,19 +69,19 @@ import type { Project } from '../types/project'
 
 export const projectsAtom = atomWithStorage<Project[]>('projects', [])
 
-export const openedProjectsAtom = atom<Set<string>>(new Set())
+export const openedProjectIdsAtom = atom<Set<string>>(new Set())
 
 // Derived: are all projects expanded
 export const isAllProjectsExpandedAtom = atom((get) => {
   const projects = get(projectsAtom)
-  const openedProjects = get(openedProjectsAtom)
-  return projects.length > 0 && projects.every(p => openedProjects.has(p.id))
+  const openedProjectIds = get(openedProjectIdsAtom)
+  return projects.length > 0 && projects.every(p => openedProjectIds.has(p.id))
 })
 
 // Derived: are all projects collapsed
 export const isAllProjectsCollapsedAtom = atom((get) => {
-  const openedProjects = get(openedProjectsAtom)
-  return openedProjects.size === 0
+  const openedProjectIds = get(openedProjectIdsAtom)
+  return openedProjectIds.size === 0
 })
 ```
 
@@ -90,6 +90,7 @@ export const isAllProjectsCollapsedAtom = atom((get) => {
 ```typescript
 import { atom } from 'jotai'
 import type { Thread } from '../types/thread'
+import { sidebarAtom } from './sidebar'
 
 // All threads - base data
 export const threadsAtom = atom<Thread[]>([])
@@ -106,20 +107,40 @@ export const pinnedThreadsAtom = atom((get) => {
     .filter((t): t is Thread => t != null)
 })
 
-// Derived: unpinned threads sorted by updatedAt desc
-export const sortedThreadsAtom = atom((get) => {
+// Derived: unpinned threads for flat view, sorted by sidebar preferences
+export const flatThreadsAtom = atom((get) => {
   const threads = get(threadsAtom)
-  return threads
-    .filter(t => !t.isPinned)
-    .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+  const pinnedIds = get(pinnedThreadIdsAtom)
+  const sidebar = get(sidebarAtom)
+
+  const unpinned = threads.filter(t => !pinnedIds.includes(t.id))
+
+  return [...unpinned].sort((a, b) => {
+    const field = sidebar.sortField
+    const order = sidebar.sortOrder === 'asc' ? 1 : -1
+    const aVal = field === 'updatedAt' ? a.updatedAt.getTime() : a.createdAt.getTime()
+    const bVal = field === 'updatedAt' ? b.updatedAt.getTime() : b.createdAt.getTime()
+    return (aVal - bVal) * order
+  })
 })
 
-// Derived: threads in a specific project (unpinned, sorted)
-export const projectThreadsSelector = atom((get) => (projectId: string) => {
+// Derived: threads in a specific project (unpinned, sorted by sidebar preferences)
+export const projectThreadsAtom = atom((get) => (projectId: string) => {
   const threads = get(threadsAtom)
-  return threads
-    .filter(t => t.projectId === projectId && !t.isPinned)
-    .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+  const pinnedIds = get(pinnedThreadIdsAtom)
+  const sidebar = get(sidebarAtom)
+
+  const projectThreads = threads.filter(
+    t => t.projectId === projectId && !pinnedIds.includes(t.id)
+  )
+
+  return [...projectThreads].sort((a, b) => {
+    const field = sidebar.sortField
+    const order = sidebar.sortOrder === 'asc' ? 1 : -1
+    const aVal = field === 'updatedAt' ? a.updatedAt.getTime() : a.createdAt.getTime()
+    const bVal = field === 'updatedAt' ? b.updatedAt.getTime() : b.createdAt.getTime()
+    return (aVal - bVal) * order
+  })
 })
 ```
 
