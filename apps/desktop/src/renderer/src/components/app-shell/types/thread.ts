@@ -18,7 +18,7 @@ export type TreeNode =
 			type: 'thread'
 			id: string
 			name: string
-			folderId: string | null
+			folderId: string
 			updatedAt: Date
 			isPinned: boolean
 	  }
