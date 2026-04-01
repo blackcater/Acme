@@ -13,7 +13,7 @@ renderer/src/
 │   ├── project.ts        # projectsAtom, openedProjectsAtom,
 │                         # areAllProjectsExpandedAtom, areAllProjectsCollapsedAtom
 │   └── thread.ts         # threadsAtom, sortedThreadsAtom, pinnedThreadsAtom,
-│                         # projectThreadsSelector, selectedThreadIdAtom
+│                         # projectThreadsSelector
 ├── types/
 │   ├── sidebar.ts        # SidebarState, SidebarViewMode
 │   ├── thread.ts         # Thread
@@ -72,14 +72,14 @@ export const projectsAtom = atomWithStorage<Project[]>('projects', [])
 export const openedProjectsAtom = atom<Set<string>>(new Set())
 
 // Derived: are all projects expanded
-export const areAllProjectsExpandedAtom = atom((get) => {
+export const isAllProjectsExpandedAtom = atom((get) => {
   const projects = get(projectsAtom)
   const openedProjects = get(openedProjectsAtom)
   return projects.length > 0 && projects.every(p => openedProjects.has(p.id))
 })
 
 // Derived: are all projects collapsed
-export const areAllProjectsCollapsedAtom = atom((get) => {
+export const isAllProjectsCollapsedAtom = atom((get) => {
   const openedProjects = get(openedProjectsAtom)
   return openedProjects.size === 0
 })
@@ -93,9 +93,6 @@ import type { Thread } from '../types/thread'
 
 // View mode: 'folder' | 'flat'
 export const viewModeAtom = atom<'folder' | 'flat'>('folder')
-
-// Selected thread
-export const selectedThreadIdAtom = atom<string | null>(null)
 
 // Pinned thread IDs - ordered array
 export const pinnedThreadIdsAtom = atom<string[]>([])
