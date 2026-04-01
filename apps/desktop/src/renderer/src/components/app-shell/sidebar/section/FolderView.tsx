@@ -3,14 +3,10 @@ import { DragDropProvider, DragOverlay } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
 import { useAtom, useAtomValue } from 'jotai'
 
+import { projectsAtom, openedProjectIdsAtom } from '@renderer/atoms/project'
+import { threadsAtom, pinnedThreadIdsAtom } from '@renderer/atoms/thread'
 import { findElementUntilRoot } from '~/src/shared/dom'
 
-import {
-	foldersAtom,
-	threadsAtom,
-	openFoldersAtom,
-	pinnedThreadIdsAtom,
-} from '../../atoms/thread-atoms'
 import { FolderCell } from '../cell/FolderCell'
 import { ThreadCell } from '../cell/ThreadCell'
 
@@ -74,13 +70,14 @@ function SortableFolder({
 }
 
 export function FolderView() {
-	const [openFolders, setOpenFolders] = useAtom(openFoldersAtom)
-	const folders = useAtomValue(foldersAtom)
+	const [openedProjectIds, setOpenedProjectIds] =
+		useAtom(openedProjectIdsAtom)
+	const projects = useAtomValue(projectsAtom)
 	const threads = useAtomValue(threadsAtom)
 	const pinnedThreadIds = useAtomValue(pinnedThreadIdsAtom)
 
 	const handleToggleFolder = (folderId: string) => {
-		setOpenFolders((prev) => {
+		setOpenedProjectIds((prev) => {
 			const next = new Set(prev)
 			if (next.has(folderId)) {
 				next.delete(folderId)
@@ -91,7 +88,7 @@ export function FolderView() {
 		})
 	}
 
-	const folderContents = folders.map((folder) => ({
+	const folderContents = projects.map((folder) => ({
 		folder,
 		threads: threads.filter(
 			(t) => t.folderId === folder.id && !pinnedThreadIds.includes(t.id)
@@ -118,7 +115,7 @@ export function FolderView() {
 		>
 			<DragOverlay>
 				{(source) => {
-					const folder = folders.find((f) => f.id === source.id)
+					const folder = projects.find((f) => f.id === source.id)
 					if (!folder) return null
 					return (
 						<FolderCell
@@ -138,7 +135,7 @@ export function FolderView() {
 							folder={folder}
 							threads={folderThreads}
 							index={index}
-							isOpen={openFolders.has(folder.id)}
+							isOpen={openedProjectIds.has(folder.id)}
 							onToggle={handleToggleFolder}
 						/>
 					)
