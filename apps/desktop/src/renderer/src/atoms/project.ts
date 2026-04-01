@@ -2,8 +2,9 @@ import { atom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
 
 import type { Project } from '../types/project'
+import { mockProjects } from './mock-data'
 
-export const projectsAtom = atomWithStorage<Project[]>('projects', [])
+export const projectsAtom = atomWithStorage<Project[]>('projects', mockProjects)
 
 export const openedProjectIdsAtom = atom<Set<string>>(new Set<string>())
 

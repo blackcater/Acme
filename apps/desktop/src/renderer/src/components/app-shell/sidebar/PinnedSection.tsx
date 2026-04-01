@@ -1,9 +1,9 @@
 import { cn } from '@acme-ai/ui'
 import { DragDropProvider, DragOverlay } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
-import { useAtomValue } from 'jotai'
+import { useAtomValue, useSetAtom } from 'jotai'
 
-import { threadsAtom, pinnedThreadsAtom } from '@renderer/atoms'
+import { pinnedThreadIdsAtom, pinnedThreadsAtom } from '@renderer/atoms'
 import type { Thread } from '@renderer/types'
 
 import { ThreadCell } from './cell/ThreadCell'
@@ -14,11 +14,20 @@ interface SortableThreadProps {
 }
 
 function SortableThread({ thread, index }: Readonly<SortableThreadProps>) {
+	const setPinnedThreadIds = useSetAtom(pinnedThreadIdsAtom)
 	const { ref, isDragging } = useSortable({
 		id: thread.id,
 		index,
 		type: 'thread',
 	})
+
+	function handleTogglePin(id: string) {
+		setPinnedThreadIds((prev) => prev.filter((threadId) => threadId !== id))
+	}
+
+	function handleDelete(id: string) {
+		console.log('delete:', id)
+	}
 
 	return (
 		<div
@@ -29,13 +38,17 @@ function SortableThread({ thread, index }: Readonly<SortableThreadProps>) {
 				!isDragging && 'cursor-grab active:cursor-grabbing'
 			)}
 		>
-			<ThreadCell thread={thread} isPinned={true} />
+			<ThreadCell
+				thread={thread}
+				isPinned
+				onTogglePin={handleTogglePin}
+				onDelete={handleDelete}
+			/>
 		</div>
 	)
 }
 
 export function PinnedSection() {
-	const threads = useAtomValue(threadsAtom)
 	const pinnedThreads = useAtomValue(pinnedThreadsAtom)
 
 	if (pinnedThreads.length === 0) {
@@ -46,7 +59,7 @@ export function PinnedSection() {
 		<DragDropProvider>
 			<DragOverlay>
 				{(source) => {
-					const thread = threads.find((t) => t.id === source.id)
+					const thread = pinnedThreads.find((t) => t.id === source.id)
 					if (!thread) return null
 					return <ThreadCell thread={thread} isPinned />
 				}}

@@ -1,14 +1,15 @@
 import { atom } from 'jotai'
 
 import type { Thread, ThreadSortField } from '../types/thread'
+import { mockPinnedThreadIds, mockThreads } from './mock-data'
 import { projectsAtom } from './project'
 import { sidebarAtom } from './sidebar'
 
 // All threads - base data
-export const threadsAtom = atom<Thread[]>([])
+export const threadsAtom = atom<Thread[]>(mockThreads)
 
 // Pinned thread IDs - ordered array
-export const pinnedThreadIdsAtom = atom<string[]>([])
+export const pinnedThreadIdsAtom = atom<string[]>(mockPinnedThreadIds)
 
 // Derived: pinned threads (maintains order from pinnedThreadIdsAtom)
 export const pinnedThreadsAtom = atom((get) => {
