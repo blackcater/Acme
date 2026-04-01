@@ -13,7 +13,7 @@ renderer/src/
 │   ├── project.ts        # projectsAtom, openedProjectIdsAtom,
 │                         # areAllProjectsExpandedAtom, areAllProjectsCollapsedAtom
 │   └── thread.ts         # threadsAtom, pinnedThreadsAtom, pinnedThreadIdsAtom,
-│                         # flatThreadsAtom, projectThreadsAtom
+│                         # flatThreadsAtom, projectTreeAtom
 ├── types/
 │   ├── sidebar.ts        # SidebarState, SidebarViewMode
 │   ├── thread.ts         # Thread
@@ -124,23 +124,27 @@ export const flatThreadsAtom = atom((get) => {
   })
 })
 
-// Derived: threads in a specific project (unpinned, sorted by sidebar preferences)
-export const projectThreadsAtom = atom((get) => (projectId: string) => {
+// Derived: project tree with threads, sorted by sidebar preferences
+export const projectTreeAtom = atom((get) => {
   const threads = get(threadsAtom)
   const pinnedIds = get(pinnedThreadIdsAtom)
+  const projects = get(projectsAtom)
   const sidebar = get(sidebarAtom)
 
-  const projectThreads = threads.filter(
-    t => t.projectId === projectId && !pinnedIds.includes(t.id)
-  )
-
-  return [...projectThreads].sort((a, b) => {
-    const field = sidebar.sortField
-    const order = sidebar.sortOrder === 'asc' ? 1 : -1
-    const aVal = field === 'updatedAt' ? a.updatedAt.getTime() : a.createdAt.getTime()
-    const bVal = field === 'updatedAt' ? b.updatedAt.getTime() : b.createdAt.getTime()
-    return (aVal - bVal) * order
-  })
+  return [...projects]
+    .sort((a, b) => a.order - b.order)
+    .map((project) => ({
+      project,
+      threads: threads
+        .filter(t => t.projectId === project.id && !pinnedIds.includes(t.id))
+        .sort((a, b) => {
+          const field = sidebar.sortField
+          const order = sidebar.sortOrder === 'asc' ? 1 : -1
+          const aVal = field === 'updatedAt' ? a.updatedAt.getTime() : a.createdAt.getTime()
+          const bVal = field === 'updatedAt' ? b.updatedAt.getTime() : b.createdAt.getTime()
+          return (aVal - bVal) * order
+        }),
+    }))
 })
 ```
 
@@ -149,6 +153,8 @@ export const projectThreadsAtom = atom((get) => (projectId: string) => {
 ### types/thread.ts
 
 ```typescript
+import type { Project } from './project'
+
 export interface Thread {
   id: string
   title: string
@@ -165,12 +171,20 @@ export type ThreadSortOrder = 'asc' | 'desc'
 ### types/project.ts
 
 ```typescript
+import type { Thread } from './thread'
+
 export interface Project {
   id: string
   title: string
   order: number
 }
-```
+
+export interface ProjectTreeNode {
+  project: Project
+  threads: Thread[]
+}
+
+export type ProjectTree = ProjectTreeNode[]
 
 ### types/sidebar.ts
 
