@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type DragEvent } from 'react'
 
 import { Button } from '@acme-ai/ui/foundation'
 import { cn } from '@acme-ai/ui/lib/utils'
@@ -14,14 +14,20 @@ export interface ThreadCellProps {
 	isPinned?: boolean
 	onTogglePin?: (id: string) => void
 	onDelete?: (id: string) => void
+	draggable?: boolean
+	onDragStart?: (e: DragEvent) => void
+	onDragEnd?: (e: DragEvent) => void
 	className?: string
 }
 
 export function ThreadCell({
 	thread,
 	isPinned = false,
-	onTogglePin: _onTogglePin,
+	onTogglePin,
 	onDelete,
+	draggable = false,
+	onDragStart,
+	onDragEnd,
 	className,
 }: Readonly<ThreadCellProps>) {
 	const [isConfirming, setIsConfirming] = useState(false)
@@ -42,10 +48,19 @@ export function ThreadCell({
 				'hover:bg-black/10 dark:hover:bg-white/10',
 				className
 			)}
+			draggable={draggable}
+			onDragStart={onDragStart}
+			onDragEnd={onDragEnd}
 			onMouseLeave={() => isConfirming && setIsConfirming(false)}
 		>
-			{/* Left icon area: show pin icon on hover */}
-			<CellIcon className="cursor-pointer">
+			{/* Left icon area: show pin icon */}
+			<CellIcon
+				className="cursor-pointer"
+				onClick={(e) => {
+					e.stopPropagation()
+					onTogglePin?.(thread.id)
+				}}
+			>
 				<HugeiconsIcon
 					icon={PinIcon}
 					className={cn(
