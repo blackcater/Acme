@@ -6,6 +6,7 @@ import {
 	foldersAtom,
 	threadsAtom,
 	openFoldersAtom,
+	pinnedThreadIdsAtom,
 } from '../../atoms/thread-atoms'
 import { FolderCell } from '../cell/FolderCell'
 import { ThreadCell } from '../cell/ThreadCell'
@@ -15,6 +16,7 @@ export function FolderView() {
 	const folders = useAtomValue(foldersAtom)
 	const threads = useAtomValue(threadsAtom)
 	const setFolders = useSetAtom(foldersAtom)
+	const pinnedThreadIds = useAtomValue(pinnedThreadIdsAtom)
 
 	// Drop indicator state
 	const [dropTargetId, setDropTargetId] = useState<string | null>(null)
@@ -23,8 +25,8 @@ export function FolderView() {
 	)
 	const [draggedFolderId, setDraggedFolderId] = useState<string | null>(null)
 
-	// Refs for each folder header to calculate drop position accurately
-	const folderHeaderRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+	// Refs for each folder cell to calculate drop position accurately
+	const folderCellRefs = useRef<Map<string, HTMLDivElement>>(new Map())
 
 	const handleDragStart = useCallback((e: DragEvent, folderId: string) => {
 		setDraggedFolderId(folderId)
@@ -33,39 +35,19 @@ export function FolderView() {
 	}, [])
 
 	const handleDragOver = useCallback(
-		(e: DragEvent, folderId: string, folderThreads: { id: string }[]) => {
+		(e: DragEvent, folderId: string) => {
 			e.preventDefault()
 			if (draggedFolderId === folderId) return
-
 			e.dataTransfer.dropEffect = 'move'
+
+			const cellEl = folderCellRefs.current.get(folderId)
+			if (!cellEl) return
+
+			const rect = cellEl.getBoundingClientRect()
+			const midY = rect.top + rect.height / 2
+			const position: 'before' | 'after' = e.clientY < midY ? 'before' : 'after'
+
 			setDropTargetId(folderId)
-
-			// Get the folder header element
-			const headerElement = folderHeaderRefs.current.get(folderId)
-			if (!headerElement) return
-
-			const headerRect = headerElement.getBoundingClientRect()
-			const mouseY = e.clientY
-
-			// Check if mouse is below the folder header
-			// If yes and folder is expanded, "after" means after last thread
-			const isBelowHeader = mouseY > headerRect.bottom
-			const isOpen = openFolders.has(folderId)
-			const hasThreads = folderThreads.length > 0
-
-			let position: 'before' | 'after'
-
-			if (isBelowHeader && isOpen && hasThreads) {
-				// Mouse is in the expanded thread area
-				// "after" means after the last thread
-				// "before" still means before the folder (in the thread area, before first thread)
-				position = 'before' // In expanded area, only "before" makes sense for thread insertion
-			} else {
-				// Use the folder header's midpoint
-				const headerMidY = headerRect.top + headerRect.height / 2
-				position = mouseY < headerMidY ? 'before' : 'after'
-			}
-
 			setDropPosition(position)
 
 			// Live reorder: update folders state immediately for visual preview
@@ -81,26 +63,21 @@ export function FolderView() {
 				if (draggedIndex === -1 || targetIndex === -1) return prev
 				if (draggedIndex === targetIndex) return prev
 
-				// Remove dragged folder from its current position
 				const [draggedFolder] = folderList.splice(draggedIndex, 1)
-
-				// Find the new target index after removal
 				let newTargetIndex = folderList.findIndex(
 					(f) => f.id === folderId
 				)
 
-				// Insert at new position
 				if (position === 'before') {
 					folderList.splice(newTargetIndex, 0, draggedFolder)
 				} else {
 					folderList.splice(newTargetIndex + 1, 0, draggedFolder)
 				}
 
-				// Update order values
 				return folderList.map((f, i) => ({ ...f, order: i }))
 			})
 		},
-		[draggedFolderId, openFolders, setFolders]
+		[draggedFolderId, setFolders]
 	)
 
 	const handleDragLeave = useCallback(() => {
@@ -135,10 +112,12 @@ export function FolderView() {
 		})
 	}
 
-	// Group threads by folder
+	// Group threads by folder, filtering out pinned threads
 	const folderContents = folders.map((folder) => ({
 		folder,
-		threads: threads.filter((t) => t.folderId === folder.id),
+		threads: threads.filter(
+			(t) => t.folderId === folder.id && !pinnedThreadIds.includes(t.id)
+		),
 	}))
 
 	return (
@@ -151,18 +130,16 @@ export function FolderView() {
 				return (
 					<div
 						key={folder.id}
-						className="flex flex-col gap-0.5"
-						onDragOver={(e) =>
-							handleDragOver(e, folder.id, folderThreads)
-						}
-						onDragLeave={handleDragLeave}
+						className="flex flex-col gap-0.5 transition-transform duration-200 ease-out"
+						onDragOver={(e) => handleDragOver(e, folder.id)}
 						onDrop={(e) => handleDrop(e, folder.id)}
+						onDragLeave={handleDragLeave}
 					>
 						<div
 							ref={(el) => {
 								if (el)
-									folderHeaderRefs.current.set(folder.id, el)
-								else folderHeaderRefs.current.delete(folder.id)
+									folderCellRefs.current.set(folder.id, el)
+								else folderCellRefs.current.delete(folder.id)
 							}}
 						>
 							<FolderCell
@@ -196,6 +173,7 @@ export function FolderView() {
 									<ThreadCell
 										key={thread.id}
 										thread={thread}
+										draggable={false}
 									/>
 								))}
 							</div>
