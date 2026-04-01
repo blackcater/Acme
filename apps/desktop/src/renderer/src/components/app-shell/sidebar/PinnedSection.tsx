@@ -64,7 +64,7 @@ export function PinnedSection() {
 					return <ThreadCell thread={thread} isPinned />
 				}}
 			</DragOverlay>
-			<section className="flex flex-col gap-1 px-2 py-2">
+			<section className="flex max-h-48 min-h-0 flex-col gap-1 overflow-y-auto px-2 py-2">
 				<div className="flex flex-col gap-0.5">
 					{pinnedThreads.map((thread, index) => (
 						<SortableThread

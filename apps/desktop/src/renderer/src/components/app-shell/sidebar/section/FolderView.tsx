@@ -126,7 +126,7 @@ export function FolderView() {
 					)
 				}}
 			</DragOverlay>
-			<div className="flex flex-col gap-0.5">
+			<div className="flex max-w-full flex-col gap-0.5">
 				{folderContents.map(
 					({ folder, threads: folderThreads }, index) => (
 						<SortableFolder

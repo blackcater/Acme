@@ -23,7 +23,7 @@ export function ProjectSection() {
 	}
 
 	return (
-		<section className="flex flex-col gap-1 px-2">
+		<section className="flex h-full max-w-full flex-col gap-1 px-2">
 			<ThreadTitleCell
 				title="Threads"
 				onSort={handleSort}

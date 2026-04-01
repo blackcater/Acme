@@ -13,7 +13,7 @@ export function FlatView() {
 		.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
 
 	return (
-		<div className="flex flex-col gap-0.5">
+		<div className="flex max-w-full flex-col gap-0.5">
 			{sortedThreads.map((thread) => (
 				<ThreadCell key={thread.id} thread={thread} />
 			))}
