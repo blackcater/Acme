@@ -4,8 +4,8 @@ import { cn } from '@acme-ai/ui'
 import { Button } from '@acme-ai/ui/foundation'
 import { Archive04Icon, PinIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
-import { formatDistanceToNow } from 'date-fns'
 
+import { formatRelativeTime } from '@renderer/lib/time'
 import type { Thread } from '@renderer/types'
 
 import { Cell, CellIcon, CellName, CellActions } from './Cell'
@@ -72,9 +72,7 @@ export function ThreadCell({
 			<div className="flex items-center gap-2">
 				<CellActions>
 					<span className="text-muted-foreground/60 text-xs group-hover:hidden">
-						{formatDistanceToNow(thread.updatedAt, {
-							addSuffix: true,
-						})}
+						{formatRelativeTime(thread.updatedAt)}
 					</span>
 					{isConfirming ? (
 						<Button
