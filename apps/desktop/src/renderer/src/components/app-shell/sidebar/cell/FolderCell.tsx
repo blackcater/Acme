@@ -54,6 +54,7 @@ export function FolderCell({
 				!isDragging && 'cursor-grab active:cursor-grabbing',
 				className
 			)}
+			data-cell="folder"
 			onClick={() => onToggle(id)}
 			onMouseEnter={() => setIsHovered(true)}
 			onMouseLeave={() => setIsHovered(false)}

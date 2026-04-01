@@ -3,6 +3,8 @@ import { DragDropProvider, DragOverlay } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
 import { useAtom, useAtomValue } from 'jotai'
 
+import { findElementUntilRoot } from '~/src/shared/dom'
+
 import {
 	foldersAtom,
 	threadsAtom,
@@ -98,7 +100,23 @@ export function FolderView() {
 	}))
 
 	return (
-		<DragDropProvider>
+		<DragDropProvider
+			onBeforeDragStart={(event) => {
+				if (!event.cancelable) return
+				const pos = event.operation.position.current
+				const ele = document.elementFromPoint(
+					pos.x,
+					pos.y
+				) as HTMLElement | null
+				if (!ele) return
+				const folderElm = findElementUntilRoot(
+					ele,
+					(ele) => ele.dataset['cell'] === 'folder'
+				)
+				if (folderElm) return
+				event.preventDefault()
+			}}
+		>
 			<div className="flex flex-col gap-0.5">
 				<DragOverlay>
 					{(source) => {

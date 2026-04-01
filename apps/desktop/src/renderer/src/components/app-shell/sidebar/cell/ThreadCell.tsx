@@ -38,7 +38,7 @@ export function ThreadCell({
 	return (
 		<Cell
 			className={cn(
-				'text-left',
+				'text-left select-none',
 				'hover:bg-black/10 dark:hover:bg-white/10',
 				className
 			)}
