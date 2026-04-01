@@ -10,7 +10,8 @@
 renderer/src/
 ├── atoms/
 │   ├── sidebar.ts        # sidebarAtom
-│   ├── project.ts        # projectsAtom, openProjectsAtom
+│   ├── project.ts        # projectsAtom, openedProjectsAtom,
+│                         # areAllProjectsExpandedAtom, areAllProjectsCollapsedAtom
 │   └── thread.ts         # threadsAtom, sortedThreadsAtom, pinnedThreadsAtom,
 │                         # projectThreadsSelector, selectedThreadIdAtom
 ├── types/
@@ -68,7 +69,20 @@ import type { Project } from '../types/project'
 
 export const projectsAtom = atomWithStorage<Project[]>('projects', [])
 
-export const openProjectsAtom = atom<Set<string>>(new Set())
+export const openedProjectsAtom = atom<Set<string>>(new Set())
+
+// Derived: are all projects expanded
+export const areAllProjectsExpandedAtom = atom((get) => {
+  const projects = get(projectsAtom)
+  const openedProjects = get(openedProjectsAtom)
+  return projects.length > 0 && projects.every(p => openedProjects.has(p.id))
+})
+
+// Derived: are all projects collapsed
+export const areAllProjectsCollapsedAtom = atom((get) => {
+  const openedProjects = get(openedProjectsAtom)
+  return openedProjects.size === 0
+})
 ```
 
 ### thread.ts
