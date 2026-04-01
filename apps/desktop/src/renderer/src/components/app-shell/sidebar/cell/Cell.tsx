@@ -18,7 +18,7 @@ export function Cell({ className, children, ...props }: Readonly<CellProps>) {
 	)
 }
 
-export interface CellIconProps extends React.HTMLAttributes<HTMLButtonElement> {}
+export interface CellIconProps extends React.HTMLAttributes<HTMLDivElement> {}
 
 export function CellIcon({
 	className,
@@ -26,15 +26,15 @@ export function CellIcon({
 	...props
 }: Readonly<CellIconProps>) {
 	return (
-		<button
+		<div
 			className={cn(
-				'mr-1.5 flex shrink-0 items-center justify-start',
+				'relative mr-1.5 flex shrink-0 items-center justify-start',
 				className
 			)}
 			{...props}
 		>
 			{children}
-		</button>
+		</div>
 	)
 }
 

@@ -10,7 +10,7 @@ export function ProjectSection() {
 	const viewMode = sidebar.viewMode
 
 	return (
-		<div className="flex h-full max-w-full flex-col gap-1 px-2">
+		<div className="flex h-full max-w-full flex-col px-2 pb-4">
 			{viewMode === 'folder' ? <FolderView /> : <FlatView />}
 		</div>
 	)

@@ -42,37 +42,36 @@ export function FolderCell({
 	onRename,
 	onDelete,
 }: Readonly<FolderCellProps>) {
-	const [isHovered, setIsHovered] = useState(false)
 	const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-	const showActions = isHovered || isMenuOpen
+	const showActions = isMenuOpen
 
 	return (
 		<Cell
 			className={cn(
+				'group-hover:bg-black/10 dark:group-hover:bg-white/10',
 				'hover:bg-black/10 dark:hover:bg-white/10',
 				!isDragging && 'cursor-grab active:cursor-grabbing',
 				className
 			)}
 			data-cell="folder"
 			onClick={() => onToggle(id)}
-			onMouseEnter={() => setIsHovered(true)}
-			onMouseLeave={() => setIsHovered(false)}
 		>
 			{/* 左侧图标 */}
 			<CellIcon>
-				{/* 展开/折叠图标 - 带旋转动画 */}
+				{/* 文件夹图标 - 始终显示 */}
+				<HugeiconsIcon
+					icon={isExpanded ? Folder02Icon : Folder01Icon}
+					className="text-foreground size-3.5"
+				/>
+				{/* 展开箭头 - 仅在 hover 时显示 */}
 				<HugeiconsIcon
 					icon={ArrowRight01Icon}
 					className={cn(
-						'absolute size-3.5 opacity-0 transition-all duration-200 group-hover:opacity-100',
+						'text-foreground absolute size-3.5 transition-all duration-200',
+						'opacity-0 group-hover:opacity-100',
 						isExpanded ? 'rotate-90' : 'rotate-0'
 					)}
-				/>
-				{/* 实际的 folder 图标 */}
-				<HugeiconsIcon
-					icon={isExpanded ? Folder02Icon : Folder01Icon}
-					className="text-foreground size-3.5 opacity-100 group-hover:opacity-0"
 				/>
 			</CellIcon>
 
@@ -81,7 +80,12 @@ export function FolderCell({
 
 			{/* 操作区 */}
 			<CellActions
-				className={cn(showActions ? 'opacity-100' : 'opacity-0')}
+				className={cn(
+					'transition-opacity duration-150',
+					showActions
+						? 'opacity-100'
+						: 'opacity-0 group-hover:opacity-100'
+				)}
 			>
 				<DropdownMenu modal={false} onOpenChange={setIsMenuOpen}>
 					<DropdownMenuTrigger
