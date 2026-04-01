@@ -34,7 +34,7 @@ export function AppSidebar(): React.JSX.Element {
 				onSort={handleSort}
 				onAdd={handleAddFolder}
 			/>
-			<ScrollArea className="min-h-0 flex-1">
+			<ScrollArea className="min-h-0 flex-1" type="scroll">
 				<ProjectSection />
 			</ScrollArea>
 			<SidebarFooter />
