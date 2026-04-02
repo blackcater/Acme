@@ -3,7 +3,11 @@ import { DragDropProvider, DragOverlay } from '@dnd-kit/react'
 import { useSortable } from '@dnd-kit/react/sortable'
 import { useAtomValue, useSetAtom } from 'jotai'
 
-import { pinnedThreadIdsAtom, pinnedThreadsAtom } from '@renderer/atoms'
+import {
+	pinnedThreadIdsAtom,
+	pinnedThreadsAtom,
+	sidebarAtom,
+} from '@renderer/atoms'
 import type { Thread } from '@renderer/types'
 
 import { ThreadCell } from './cell/ThreadCell'
@@ -33,7 +37,7 @@ function SortableThread({ thread, index }: Readonly<SortableThreadProps>) {
 		<div
 			ref={ref}
 			className={cn(
-				'select-none',
+				'overflow-hidden select-none',
 				isDragging && 'pointer-events-none opacity-0',
 				!isDragging && 'cursor-grab active:cursor-grabbing'
 			)}
@@ -49,6 +53,7 @@ function SortableThread({ thread, index }: Readonly<SortableThreadProps>) {
 }
 
 export function PinnedSection() {
+	const { width } = useAtomValue(sidebarAtom)
 	const pinnedThreads = useAtomValue(pinnedThreadsAtom)
 
 	if (pinnedThreads.length === 0) {
@@ -56,16 +61,21 @@ export function PinnedSection() {
 	}
 
 	return (
-		<DragDropProvider>
-			<DragOverlay>
-				{(source) => {
-					const thread = pinnedThreads.find((t) => t.id === source.id)
-					if (!thread) return null
-					return <ThreadCell thread={thread} isPinned />
-				}}
-			</DragOverlay>
-			<section className="flex max-h-48 min-h-0 flex-col gap-1 overflow-y-auto px-2 py-2">
-				<div className="flex flex-col gap-0.5">
+		<section
+			className="flex flex-col overflow-hidden px-2 pb-4"
+			style={{ width: `${width}px` }}
+		>
+			<DragDropProvider>
+				<DragOverlay>
+					{(source) => {
+						const thread = pinnedThreads.find(
+							(t) => t.id === source.id
+						)
+						if (!thread) return null
+						return <ThreadCell thread={thread} isPinned />
+					}}
+				</DragOverlay>
+				<div className="flex w-full flex-col gap-0.5 overflow-hidden">
 					{pinnedThreads.map((thread, index) => (
 						<SortableThread
 							key={thread.id}
@@ -74,7 +84,7 @@ export function PinnedSection() {
 						/>
 					))}
 				</div>
-			</section>
-		</DragDropProvider>
+			</DragDropProvider>
+		</section>
 	)
 }

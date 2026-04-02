@@ -9,7 +9,7 @@ export function AppSidebar(): React.JSX.Element {
 	return (
 		<aside className="text-secondary-foreground relative flex h-full w-[256px] shrink-0 flex-col overflow-hidden">
 			<SidebarHeader />
-			<ScrollArea className="min-h-0 flex-1" type="scroll">
+			<ScrollArea className="flex-1 min-w-0" type="scroll">
 				<PinnedSection />
 				<ProjectSection />
 			</ScrollArea>

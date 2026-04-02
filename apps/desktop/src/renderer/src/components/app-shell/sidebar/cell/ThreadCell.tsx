@@ -69,7 +69,7 @@ export function ThreadCell({
 			<CellName className="text-foreground">{thread.title}</CellName>
 
 			{/* Tail: time + hover actions */}
-			<div className="flex items-center gap-2">
+			<div className="flex shrink-0 items-center gap-2">
 				<CellActions>
 					<span className="text-muted-foreground/60 text-xs group-hover:hidden">
 						{formatRelativeTime(thread.updatedAt)}

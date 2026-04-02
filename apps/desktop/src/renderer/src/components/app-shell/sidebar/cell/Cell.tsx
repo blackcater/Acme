@@ -8,7 +8,7 @@ export function Cell({ className, children, ...props }: Readonly<CellProps>) {
 	return (
 		<div
 			className={cn(
-				'group text-secondary-foreground flex h-8 items-center gap-1 rounded-md px-2.5 text-sm transition-colors',
+				'group text-secondary-foreground flex h-8 items-center gap-1 overflow-hidden rounded-md px-2.5 text-sm transition-colors',
 				className
 			)}
 			{...props}
@@ -62,7 +62,7 @@ export function CellActions({
 	return (
 		<div
 			className={cn(
-				'flex items-center gap-1 transition-opacity',
+				'flex shrink-0 items-center gap-1 transition-opacity',
 				className
 			)}
 			{...props}

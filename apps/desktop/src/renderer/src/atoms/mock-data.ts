@@ -137,4 +137,4 @@ export const mockThreads: Thread[] = [
 	},
 ]
 
-export const mockPinnedThreadIds = ['thread-4', 'thread-7', 'thread-13']
+export const mockPinnedThreadIds = ['thread-5', 'thread-11']
