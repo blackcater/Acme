@@ -6,6 +6,7 @@ import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from '@acme-ai/ui/foundation'
 import {
@@ -14,6 +15,11 @@ import {
 	PlusSignIcon,
 	MoreHorizontalIcon,
 	Folder02Icon,
+	Folder03Icon,
+	SplitIcon,
+	Edit03Icon,
+	Archive04Icon,
+	Delete01Icon,
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 
@@ -27,8 +33,6 @@ export interface FolderCellProps {
 	isDragging?: boolean
 	onToggle: (id: string) => void
 	onAddThread?: (folderId: string) => void
-	onRename?: (folderId: string) => void
-	onDelete?: (folderId: string) => void
 }
 
 export function FolderCell({
@@ -39,8 +43,6 @@ export function FolderCell({
 	isDragging,
 	onToggle,
 	onAddThread,
-	onRename,
-	onDelete,
 }: Readonly<FolderCellProps>) {
 	const [isMenuOpen, setIsMenuOpen] = useState(false)
 
@@ -90,37 +92,41 @@ export function FolderCell({
 						: 'opacity-0 group-hover:opacity-100'
 				)}
 			>
-				<DropdownMenu modal={false} onOpenChange={setIsMenuOpen}>
+				<DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
 					<DropdownMenuTrigger
 						asChild
 						onClick={(e) => e.stopPropagation()}
 					>
-						<Button
-							variant="ghost"
-							size="icon-sm"
-							className="h-6 w-6"
-						>
+						<Button variant="ghost" size="icon-sm">
 							<HugeiconsIcon
 								icon={MoreHorizontalIcon}
 								className="size-3.5"
 							/>
 						</Button>
 					</DropdownMenuTrigger>
-					<DropdownMenuContent align="end">
-						<DropdownMenuItem
-							onClick={(e) => {
-								e.stopPropagation()
-								onRename?.(id)
-							}}
-						>
-							Rename
+					<DropdownMenuContent className="w-fit" align="end">
+						<DropdownMenuItem>
+							<HugeiconsIcon icon={Folder03Icon} />
+							Open in Finder
 						</DropdownMenuItem>
-						<DropdownMenuItem
-							onClick={(e) => {
-								e.stopPropagation()
-								onDelete?.(id)
-							}}
-						>
+						<DropdownMenuItem>
+							<HugeiconsIcon
+								icon={SplitIcon}
+								className="rotate-90"
+							/>
+							Create permanent worktree
+						</DropdownMenuItem>
+						<DropdownMenuItem>
+							<HugeiconsIcon icon={Edit03Icon} />
+							Edit name
+						</DropdownMenuItem>
+						<DropdownMenuItem>
+							<HugeiconsIcon icon={Archive04Icon} />
+							Archive threads
+						</DropdownMenuItem>
+						<DropdownMenuSeparator />
+						<DropdownMenuItem variant="destructive">
+							<HugeiconsIcon icon={Delete01Icon} />
 							Delete
 						</DropdownMenuItem>
 					</DropdownMenuContent>
@@ -132,7 +138,6 @@ export function FolderCell({
 						e.stopPropagation()
 						onAddThread?.(id)
 					}}
-					className="h-6 w-6"
 				>
 					<HugeiconsIcon icon={PlusSignIcon} className="size-3.5" />
 				</Button>

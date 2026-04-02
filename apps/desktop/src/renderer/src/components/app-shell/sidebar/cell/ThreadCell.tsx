@@ -57,7 +57,7 @@ export function ThreadCell({
 				<HugeiconsIcon
 					icon={PinIcon}
 					className={cn(
-						'text-muted-foreground h-3.5 w-3.5 transition-opacity',
+						'text-muted-foreground size-3.5 transition-opacity',
 						isPinned
 							? 'opacity-100'
 							: 'opacity-0 group-hover:opacity-100'
@@ -99,7 +99,7 @@ export function ThreadCell({
 						>
 							<HugeiconsIcon
 								icon={Archive04Icon}
-								className="h-3 w-3"
+								className="size-3"
 							/>
 						</Button>
 					)}
