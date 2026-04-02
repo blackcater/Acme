@@ -8,8 +8,44 @@ import {
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Link, useParams } from '@tanstack/react-router'
 
-export function SidebarHeader() {
+interface SidebarHeaderProps {
+	collapsed?: boolean
+}
+
+export function SidebarHeader({ collapsed }: SidebarHeaderProps = {}) {
 	const { vaultId } = useParams({ from: '/vault/$vaultId' })
+
+	if (collapsed) {
+		return (
+			<div className="mb-2 flex w-full flex-col items-center gap-2 pt-1">
+				<Button variant="pure" size="icon" asChild>
+					<Link to="/vault/$vaultId" params={{ vaultId }}>
+						<HugeiconsIcon icon={ChatAddIcon} />
+					</Link>
+				</Button>
+				<Button variant="pure" size="icon" asChild>
+					<Link
+						to="/vault/$vaultId/extensions"
+						params={{ vaultId }}
+						activeOptions={{ exact: true }}
+						activeProps={{ className: 'bg-hover' }}
+					>
+						<HugeiconsIcon icon={DashboardSquare01Icon} />
+					</Link>
+				</Button>
+				<Button variant="pure" size="icon" asChild>
+					<Link
+						to="/vault/$vaultId/automations"
+						params={{ vaultId }}
+						activeOptions={{ exact: true }}
+						activeProps={{ className: 'bg-hover' }}
+					>
+						<HugeiconsIcon icon={Clock01Icon} />
+					</Link>
+				</Button>
+			</div>
+		)
+	}
 
 	return (
 		<div className="mb-2 flex w-full flex-col items-start gap-2">
