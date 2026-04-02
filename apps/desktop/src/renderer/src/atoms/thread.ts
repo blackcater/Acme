@@ -1,6 +1,7 @@
 import { atom } from 'jotai'
 
-import type { Thread, ThreadSortField } from '../types/thread'
+import type { Thread } from '../types/thread'
+import type { SortBy } from '../types/sidebar'
 import { mockPinnedThreadIds, mockThreads } from './mock-data'
 import { projectsAtom } from './project'
 import { sidebarAtom } from './sidebar'
@@ -29,8 +30,8 @@ export const flatThreadsAtom = atom((get) => {
 	const unpinned = threads.filter((t) => !pinnedIds.includes(t.id))
 
 	return [...unpinned].sort((a, b) => {
-		const field: ThreadSortField = sidebar.sortField
-		const order: number = sidebar.sortOrder === 'asc' ? 1 : -1
+		const field: SortBy = sidebar.sortBy
+		const order = -1
 		const aVal =
 			field === 'updatedAt'
 				? a.updatedAt.getTime()
@@ -57,8 +58,8 @@ export const projectTreeAtom = atom((get) => {
 				(t) => t.projectId === project.id && !pinnedIds.includes(t.id)
 			)
 			.sort((a, b) => {
-				const field: ThreadSortField = sidebar.sortField
-				const order: number = sidebar.sortOrder === 'asc' ? 1 : -1
+				const field: SortBy = sidebar.sortBy
+				const order = -1
 				const aVal =
 					field === 'updatedAt'
 						? a.updatedAt.getTime()
