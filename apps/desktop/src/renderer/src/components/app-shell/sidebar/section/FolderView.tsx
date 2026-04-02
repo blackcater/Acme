@@ -22,6 +22,11 @@ interface SortableFolderProps {
 	isOpen: boolean
 	onToggle: (id: string) => void
 	onTogglePin: (threadId: string) => void
+	onMenuOpenInFinder?: (id: string) => void
+	onMenuCreateWorktree?: (id: string) => void
+	onMenuEditName?: (id: string) => void
+	onMenuArchiveThreads?: (id: string) => void
+	onMenuDelete?: (id: string) => void
 }
 
 function SortableFolder({
@@ -31,6 +36,11 @@ function SortableFolder({
 	isOpen,
 	onToggle,
 	onTogglePin,
+	onMenuOpenInFinder,
+	onMenuCreateWorktree,
+	onMenuEditName,
+	onMenuArchiveThreads,
+	onMenuDelete,
 }: Readonly<SortableFolderProps>) {
 	const { ref, isDragging } = useSortable({
 		id: folder.id,
@@ -56,6 +66,11 @@ function SortableFolder({
 				isExpanded={isOpen}
 				isDragging={isDragging}
 				onToggle={onToggle}
+				onMenuOpenInFinder={onMenuOpenInFinder}
+				onMenuCreateWorktree={onMenuCreateWorktree}
+				onMenuEditName={onMenuEditName}
+				onMenuArchiveThreads={onMenuArchiveThreads}
+				onMenuDelete={onMenuDelete}
 			/>
 			<div
 				className="transition-[grid-template-rows] duration-200 ease-in-out"
@@ -79,7 +94,21 @@ function SortableFolder({
 	)
 }
 
-export function FolderView() {
+interface FolderViewProps {
+	onMenuOpenInFinder?: (id: string) => void
+	onMenuCreateWorktree?: (id: string) => void
+	onMenuEditName?: (id: string) => void
+	onMenuArchiveThreads?: (id: string) => void
+	onMenuDelete?: (id: string) => void
+}
+
+export function FolderView({
+	onMenuOpenInFinder,
+	onMenuCreateWorktree,
+	onMenuEditName,
+	onMenuArchiveThreads,
+	onMenuDelete,
+}: Readonly<FolderViewProps>) {
 	const [openedProjectIds, setOpenedProjectIds] =
 		useAtom(openedProjectIdsAtom)
 	const setPinnedThreadIds = useSetAtom(pinnedThreadIdsAtom)
@@ -151,6 +180,11 @@ export function FolderView() {
 							isOpen={openedProjectIds.has(project.id)}
 							onToggle={handleToggleFolder}
 							onTogglePin={handleTogglePin}
+							onMenuOpenInFinder={onMenuOpenInFinder}
+							onMenuCreateWorktree={onMenuCreateWorktree}
+							onMenuEditName={onMenuEditName}
+							onMenuArchiveThreads={onMenuArchiveThreads}
+							onMenuDelete={onMenuDelete}
 						/>
 					)
 				)}
