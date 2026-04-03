@@ -14,12 +14,18 @@ import { is } from '@renderer/lib/electron'
 interface AppHeaderProps {
 	title?: React.ReactNode
 	actions?: React.ReactNode[]
+	onSidebarToggle?: () => void
+	onGoPrevious?: () => void
+	onGoNext?: () => void
 }
 
 export function AppHeader({
 	title,
 	actions = [],
-}: AppHeaderProps): React.JSX.Element {
+	onSidebarToggle,
+	onGoPrevious,
+	onGoNext,
+}: Readonly<AppHeaderProps>): React.JSX.Element {
 	const { content } = useHeader()
 
 	// Merge prop actions with context actions
@@ -34,7 +40,12 @@ export function AppHeader({
 					is.macOS && 'pl-20'
 				)}
 			>
-				<Button variant="ghost" size="icon" aria-label="Sidebar">
+				<Button
+					variant="ghost"
+					size="icon"
+					aria-label="Sidebar"
+					onClick={onSidebarToggle}
+				>
 					<HugeiconsIcon icon={SidebarLeftIcon} />
 				</Button>
 				<Button
@@ -42,6 +53,7 @@ export function AppHeader({
 					size="icon"
 					aria-label="Go Back"
 					disabled
+					onClick={onGoPrevious}
 				>
 					<HugeiconsIcon icon={ArrowLeft01Icon} />
 				</Button>
@@ -50,6 +62,7 @@ export function AppHeader({
 					size="icon"
 					aria-label="Go Next"
 					disabled
+					onClick={onGoNext}
 				>
 					<HugeiconsIcon icon={ArrowRight01Icon} />
 				</Button>

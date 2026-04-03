@@ -1,43 +1,66 @@
-import { Panel, Group, Separator } from 'react-resizable-panels'
+import { useRef } from 'react'
+import {
+	Panel,
+	Group,
+	Separator,
+	type PanelSize,
+	type PanelImperativeHandle,
+} from 'react-resizable-panels'
 
 import { createFileRoute, Outlet } from '@tanstack/react-router'
-import { useAtomValue } from 'jotai'
+import { useAtom } from 'jotai'
 
-import { panelAtom } from '@renderer/atoms/panel'
 import { sidebarAtom } from '@renderer/atoms/sidebar'
 import { AppHeader, AppSidebar } from '@renderer/components/app-shell'
-import { PanelRouter } from '@renderer/components/app-shell/panel/PanelRouter'
-import { HeaderProvider, useHeader } from '@renderer/contexts/HeaderContext'
+import { HeaderProvider } from '@renderer/contexts/HeaderContext'
 
 export const Route = createFileRoute('/vault/$vaultId')({
 	component: VaultLayout,
 })
 
-function VaultLayout(): React.JSX.Element {
-	const panel = useAtomValue(panelAtom)
-	const sidebar = useAtomValue(sidebarAtom)
-	const { content } = useHeader()
+function VaultLayout() {
+	const panelRef = useRef<PanelImperativeHandle | null>(null)
+	const [sidebar, setSidebar] = useAtom(sidebarAtom)
+
+	function handleSidebarToggle() {
+		if (!panelRef.current) return
+
+		if (panelRef.current.isCollapsed()) {
+			panelRef.current.expand()
+			setSidebar((prev) => ({ ...prev, collapsed: false }))
+		} else {
+			panelRef.current.collapse()
+			setSidebar((prev) => ({ ...prev, collapsed: true }))
+		}
+	}
+
+	function handleResize(
+		panelSize: PanelSize,
+		id: string | number | undefined
+	) {
+		if (id !== 'sidebar') return
+
+		setSidebar((prev) => ({ ...prev, width: panelSize.inPixels }))
+	}
 
 	return (
 		<HeaderProvider>
 			<div className="relative z-1 flex h-full w-full flex-1 flex-col">
-				<AppHeader
-					title={content.title}
-					actions={content.actions ?? []}
-				/>
+				<AppHeader onSidebarToggle={handleSidebarToggle} />
 				<Group orientation="horizontal">
 					<Panel
+						panelRef={panelRef}
 						id="sidebar"
-						collapsedSize={sidebar.collapsed ? 0 : undefined}
+						minSize={250}
+						maxSize={350}
+						defaultSize={sidebar.width}
 						collapsible
-						minSize={20}
-						maxSize={50}
-						defaultSize={25}
+						onResize={handleResize}
 					>
 						<AppSidebar />
 					</Panel>
 
-					<Separator className="hover:bg-primary/20 w-1 bg-transparent transition-colors" />
+					<Separator className="hover:bg-primary/20 my-4 w-0.5 bg-transparent transition-colors" />
 
 					<Panel id="main">
 						<div className="flex h-full w-full flex-1 flex-col overflow-hidden py-1 pr-1">
@@ -46,20 +69,6 @@ function VaultLayout(): React.JSX.Element {
 							</main>
 						</div>
 					</Panel>
-
-					{!panel.collapsed && panel.type && (
-						<>
-							<Separator className="hover:bg-primary/20 w-1 bg-transparent transition-colors" />
-							<Panel
-								id="panel"
-								minSize={25}
-								maxSize={45}
-								defaultSize={32}
-							>
-								<PanelRouter type={panel.type} />
-							</Panel>
-						</>
-					)}
 				</Group>
 			</div>
 		</HeaderProvider>
