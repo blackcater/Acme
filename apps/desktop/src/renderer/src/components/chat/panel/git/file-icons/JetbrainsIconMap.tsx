@@ -15,34 +15,39 @@ interface IconTheme {
 
 // Pre-load icon URLs using Vite's glob import
 // This gives us actual URLs like /assets/icons/file/typeScript_dark.svg?v=xxx
+// Note: glob must start with ./ or / (not TypeScript alias)
 const darkFileIcons = import.meta.glob(
-	'@renderer/assets/icons/file/*_dark.svg',
+	'./assets/icons/file/*_dark.svg',
 	{
-		as: 'url',
+		query: '?url',
+		import: 'default',
 		eager: true,
 	}
 ) as Record<string, string>
 
 const lightFileIcons = import.meta.glob(
-	'@renderer/assets/icons/file/*_light.svg',
+	'./assets/icons/file/*_light.svg',
 	{
-		as: 'url',
+		query: '?url',
+		import: 'default',
 		eager: true,
 	}
 ) as Record<string, string>
 
 const darkFolderIcons = import.meta.glob(
-	'@renderer/assets/icons/folder/*_dark.svg',
+	'./assets/icons/folder/*_dark.svg',
 	{
-		as: 'url',
+		query: '?url',
+		import: 'default',
 		eager: true,
 	}
 ) as Record<string, string>
 
 const lightFolderIcons = import.meta.glob(
-	'@renderer/assets/icons/folder/*_light.svg',
+	'./assets/icons/folder/*_light.svg',
 	{
-		as: 'url',
+		query: '?url',
+		import: 'default',
 		eager: true,
 	}
 ) as Record<string, string>
