@@ -55,17 +55,21 @@ export function FolderCell({
 	onMenuDelete,
 }: Readonly<FolderCellProps>) {
 	const [isMenuOpen, setIsMenuOpen] = useState(false)
+	const [isHovered, setIsHovered] = useState(false)
+
+	const showActions = isHovered || isMenuOpen
 
 	return (
 		<Cell
 			className={cn(
-				'group-hover:bg-black/10 dark:group-hover:bg-white/10',
-				'hover:bg-black/10 dark:hover:bg-white/10',
+				'hover:bg-black/5 dark:hover:bg-white/5',
 				!isDragging && 'cursor-grab active:cursor-grabbing',
 				className
 			)}
 			data-cell="folder"
 			onClick={() => onToggle(id)}
+			onMouseEnter={() => setIsHovered(true)}
+			onMouseLeave={() => setIsHovered(false)}
 		>
 			{/* 左侧图标 */}
 			<CellIcon>
@@ -92,7 +96,12 @@ export function FolderCell({
 			<CellName>{title}</CellName>
 
 			{/* 操作区 */}
-			<CellActions>
+			<CellActions
+				className={cn(
+					'w-0 overflow-hidden transition-all duration-200',
+					showActions && 'w-auto'
+				)}
+			>
 				<DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen}>
 					<DropdownMenuTrigger
 						asChild
