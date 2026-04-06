@@ -1,4 +1,4 @@
-export type PanelType = 'git' | 'files' | 'outline' | null
+export type PanelType = 'git' | 'files' | 'browser' | 'preview'
 
 export interface PanelState {
 	collapsed: boolean

@@ -65,7 +65,11 @@ export default defineConfig({
 				autoCodeSplitting: true,
 				routesDirectory: resolve('./src/renderer/src/routes'),
 			}),
-			react(),
+			react({
+				babel: {
+					plugins: ['babel-plugin-react-compiler'],
+				},
+			}),
 		],
 		define: {},
 		publicDir: resolve('./src/renderer/public'),

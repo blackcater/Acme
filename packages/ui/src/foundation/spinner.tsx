@@ -2,7 +2,11 @@ import { cn } from '@acme-ai/ui/lib/utils'
 import { Loading03Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 
-function Spinner({ className, strokeWidth, ...props }: React.ComponentProps<'svg'>) {
+function Spinner({
+	className,
+	strokeWidth,
+	...props
+}: React.ComponentProps<'svg'>) {
 	return (
 		<HugeiconsIcon
 			icon={Loading03Icon}

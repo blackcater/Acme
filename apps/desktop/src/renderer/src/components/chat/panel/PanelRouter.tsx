@@ -1,23 +1,26 @@
 import type { PanelType } from '@renderer/types/panel'
 
+import { BrowserPanel } from './BrowserPanel'
 import { FilesPanel } from './FilesPanel'
 import { GitPanel } from './GitPanel'
-import { OutlinePanel } from './OutlinePanel'
+import { PreviewPanel } from './PreviewPanel'
 
 interface PanelRouterProps {
-	type: PanelType
+	type?: PanelType
 }
 
 export function PanelRouter({
 	type,
-}: PanelRouterProps): React.JSX.Element | null {
+}: Readonly<PanelRouterProps>): React.JSX.Element | null {
 	switch (type) {
 		case 'git':
 			return <GitPanel />
 		case 'files':
 			return <FilesPanel />
-		case 'outline':
-			return <OutlinePanel />
+		case 'browser':
+			return <BrowserPanel />
+		case 'preview':
+			return <PreviewPanel />
 		default:
 			return null
 	}

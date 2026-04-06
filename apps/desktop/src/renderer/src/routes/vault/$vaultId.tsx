@@ -11,7 +11,6 @@ import { useAtom } from 'jotai'
 
 import { sidebarAtom } from '@renderer/atoms/sidebar'
 import { AppHeader, AppSidebar } from '@renderer/components/app-shell'
-import { HeaderProvider } from '@renderer/contexts/HeaderContext'
 
 export const Route = createFileRoute('/vault/$vaultId')({
 	component: VaultLayout,
@@ -36,36 +35,34 @@ function VaultLayout() {
 	}
 
 	return (
-		<HeaderProvider>
-			<div className="relative z-1 flex h-full w-full flex-1 flex-col">
-				<AppHeader onSidebarToggle={handleSidebarToggle} />
-				<Group
-					orientation="horizontal"
-					defaultLayout={sidebarLayout}
-					onLayoutChanged={onSidebarLayoutChanged}
-				>
-					{!sidebar.collapsed && (
-						<Panel
-							id="sidebar"
-							minSize={250}
-							maxSize={350}
-							onResize={handleSidebarResize}
-						>
-							<AppSidebar />
-						</Panel>
-					)}
-
-					<Separator className="hover:bg-primary/20 my-4 w-0.5 bg-transparent transition-colors" />
-
-					<Panel id="main">
-						<div className="flex h-full w-full flex-1 flex-col overflow-hidden py-1 pr-1">
-							<main className="bg-background h-full w-full rounded-lg">
-								<Outlet />
-							</main>
-						</div>
+		<div className="relative z-1 flex h-full w-full flex-1 flex-col">
+			<AppHeader onSidebarToggle={handleSidebarToggle} />
+			<Group
+				orientation="horizontal"
+				defaultLayout={sidebarLayout}
+				onLayoutChanged={onSidebarLayoutChanged}
+			>
+				{!sidebar.collapsed && (
+					<Panel
+						id="sidebar"
+						minSize={250}
+						maxSize={350}
+						onResize={handleSidebarResize}
+					>
+						<AppSidebar />
 					</Panel>
-				</Group>
-			</div>
-		</HeaderProvider>
+				)}
+
+				<Separator className="hover:bg-primary/20 my-4 w-0.5 bg-transparent transition-colors" />
+
+				<Panel id="main">
+					<div className="flex h-full w-full flex-1 flex-col overflow-hidden py-1 pr-1">
+						<main className="h-full w-full rounded-lg">
+							<Outlet />
+						</main>
+					</div>
+				</Panel>
+			</Group>
+		</div>
 	)
 }
