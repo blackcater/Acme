@@ -13,8 +13,12 @@ import {
 	Settings05Icon,
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
+import { useNavigate, useParams } from '@tanstack/react-router'
 
 export function SidebarFooter() {
+	const navigate = useNavigate()
+	const { vaultId } = useParams({ from: '/vault/$vaultId' })
+
 	return (
 		<div className="flex w-full flex-col">
 			<div className="text-muted-foreground flex flex-row items-center justify-center text-xs">
@@ -58,7 +62,17 @@ export function SidebarFooter() {
 					</DropdownMenu>
 				</div>
 				<div>
-					<Button variant="pure" size="icon-xl" aria-label="Settings">
+					<Button
+						variant="pure"
+						size="icon-xl"
+						aria-label="Settings"
+						onClick={() =>
+							navigate({
+								to: '/vault/$vaultId/settings',
+								params: { vaultId },
+							})
+						}
+					>
 						<HugeiconsIcon icon={Settings05Icon} />
 					</Button>
 				</div>

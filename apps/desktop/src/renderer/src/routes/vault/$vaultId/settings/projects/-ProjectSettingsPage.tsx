@@ -2,19 +2,18 @@ import { Button } from '@acme-ai/ui/foundation'
 import { Input } from '@acme-ai/ui/foundation'
 import { Textarea } from '@acme-ai/ui/foundation'
 import { Separator } from '@acme-ai/ui/foundation'
+import { useParams } from '@tanstack/react-router'
 
 import {
 	SettingsContent,
 	SettingsSection,
 } from '@renderer/components/settings/SettingsContent'
 
-interface ProjectSettingsPageProps {
-	projectId: string
-}
+export function ProjectSettingsPage(): React.JSX.Element {
+	const { projectId } = useParams({
+		from: '/vault/$vaultId/settings/projects/$projectId',
+	})
 
-export function ProjectSettingsPage({
-	projectId,
-}: ProjectSettingsPageProps): React.JSX.Element {
 	return (
 		<SettingsContent>
 			<SettingsSection
