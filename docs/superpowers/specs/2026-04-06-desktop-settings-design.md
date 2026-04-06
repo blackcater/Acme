@@ -209,11 +209,14 @@ import { SomeIcon } from '@hugeicons/core-free-icons'
 
 ```
 apps/desktop/src/renderer/src/
+├── components/settings/           # Shared settings components
+│   ├── SettingsNav.tsx          # Navigation sidebar component
+│   ├── SettingsSection.tsx      # Reusable section wrapper
+│   ├── SettingRow.tsx           # Label + description + control
+│   └── ...
 ├── routes/vault/$vaultId/
-│   ├── settings.tsx              # Layout route component
+│   ├── settings.tsx              # Settings layout (with Outlet for children)
 │   └── settings/                 # Settings sub-pages
-│       ├── -SettingsLayout.tsx  # Settings layout with sidebar
-│       ├── -SettingsNav.tsx     # Navigation sidebar component
 │       ├── -GeneralPage.tsx      # General settings
 │       ├── -AppearancePage.tsx  # Appearance settings
 │       ├── -NotificationsPage.tsx
@@ -226,16 +229,19 @@ apps/desktop/src/renderer/src/
 │       └── -AboutPage.tsx
 ```
 
+Note: `settings.tsx` is the layout route component. The SettingsNav component is placed in `components/settings/` for sharing.
+
 ## Implementation Priority
 
-1. Settings Layout (nav + content area structure)
-2. General Page (as reference implementation)
-3. Appearance Page
-4. Notifications Page
-5. Keyboard Page
-6. Agents Page
-7. Providers Page
-8. Git Page
-9. Archive Page
-10. Project Settings Page (dynamic, per-project)
-11. About Page
+1. Settings Layout (`settings.tsx` with nav + Outlet)
+2. Shared components (`components/settings/`)
+3. General Page (as reference implementation)
+4. Appearance Page
+5. Notifications Page
+6. Keyboard Page
+7. Agents Page
+8. Providers Page
+9. Git Page
+10. Archive Page
+11. Project Settings Page (dynamic, per-project)
+12. About Page
