@@ -1,4 +1,3 @@
 // Chat feature public exports
-export * from './components'
-export * from './hooks'
+// Components and hooks will be added as features are implemented
 export * from './types'
