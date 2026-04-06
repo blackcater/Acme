@@ -1,3 +1,4 @@
 // Chat feature public exports
-// Components and hooks will be added as features are implemented
-export * from './types'
+export * from './components/Chat'
+// Re-export types for convenience
+export type { ChatProps } from './components/Chat'
