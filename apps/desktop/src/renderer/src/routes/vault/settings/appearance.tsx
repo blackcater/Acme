@@ -12,7 +12,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { SettingsContent, SettingsSection } from '@renderer/components/settings'
 
-export const Route = createFileRoute('/vault/$vaultId/settings/appearance')({
+export const Route = createFileRoute('/vault/settings/appearance')({
 	component: AppearancePage,
 })
 

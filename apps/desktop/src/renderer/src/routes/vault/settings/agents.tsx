@@ -3,21 +3,21 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { SettingsContent, SettingsSection } from '@renderer/components/settings'
 
-export const Route = createFileRoute('/vault/$vaultId/settings/providers')({
-	component: ProvidersPage,
+export const Route = createFileRoute('/vault/settings/agents')({
+	component: AgentsPage,
 })
 
-function ProvidersPage() {
+function AgentsPage() {
 	return (
 		<SettingsContent>
 			<SettingsSection
-				title="Providers"
-				description="Configure model providers and API keys"
+				title="Agents"
+				description="Configure ACP-compatible agents"
 			>
 				<div className="text-muted-foreground mb-4 text-sm">
-					No providers configured yet.
+					No agents configured yet.
 				</div>
-				<Button>Add Provider</Button>
+				<Button>Add Agent</Button>
 			</SettingsSection>
 		</SettingsContent>
 	)

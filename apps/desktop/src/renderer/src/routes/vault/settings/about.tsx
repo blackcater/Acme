@@ -3,7 +3,7 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { SettingsContent, SettingsSection } from '@renderer/components/settings'
 
-export const Route = createFileRoute('/vault/$vaultId/settings/about')({
+export const Route = createFileRoute('/vault/settings/about')({
 	component: AboutPage,
 })
 

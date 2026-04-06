@@ -1,3 +1,4 @@
+import { cn } from '@acme-ai/ui'
 import {
 	Settings01Icon,
 	PaintBrush01Icon,
@@ -11,6 +12,8 @@ import {
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { Link, useMatchRoute } from '@tanstack/react-router'
+
+import { is } from '@renderer/lib/electron'
 
 interface NavItem {
 	id: string
@@ -29,26 +32,26 @@ const STATIC_GROUPS: NavGroup[] = [
 		label: 'Personal',
 		items: [
 			{
-				id: '/vault/$vaultId/settings/general',
+				id: '/vault/settings/general',
 				label: 'General',
 				icon: (
 					<HugeiconsIcon icon={Settings01Icon} className="size-4" />
 				),
 			},
 			{
-				id: '/vault/$vaultId/settings/appearance',
+				id: '/vault/settings/appearance',
 				label: 'Appearance',
 				icon: (
 					<HugeiconsIcon icon={PaintBrush01Icon} className="size-4" />
 				),
 			},
 			{
-				id: '/vault/$vaultId/settings/notifications',
+				id: '/vault/settings/notifications',
 				label: 'Notifications',
 				icon: <HugeiconsIcon icon={BellDotIcon} className="size-4" />,
 			},
 			{
-				id: '/vault/$vaultId/settings/keyboard',
+				id: '/vault/settings/keyboard',
 				label: 'Keyboard',
 				icon: <HugeiconsIcon icon={KeyboardIcon} className="size-4" />,
 			},
@@ -58,22 +61,22 @@ const STATIC_GROUPS: NavGroup[] = [
 		label: 'Workspace',
 		items: [
 			{
-				id: '/vault/$vaultId/settings/agents',
+				id: '/vault/settings/agents',
 				label: 'Agents',
 				icon: <HugeiconsIcon icon={CpuIcon} className="size-4" />,
 			},
 			{
-				id: '/vault/$vaultId/settings/providers',
+				id: '/vault/settings/providers',
 				label: 'Providers',
 				icon: <HugeiconsIcon icon={AiBrain01Icon} className="size-4" />,
 			},
 			{
-				id: '/vault/$vaultId/settings/git',
+				id: '/vault/settings/git',
 				label: 'Git',
 				icon: <HugeiconsIcon icon={FolderGitIcon} className="size-4" />,
 			},
 			{
-				id: '/vault/$vaultId/settings/archive',
+				id: '/vault/settings/archive',
 				label: 'Archive',
 				icon: <HugeiconsIcon icon={ArchiveIcon} className="size-4" />,
 			},
@@ -83,7 +86,7 @@ const STATIC_GROUPS: NavGroup[] = [
 		label: 'System',
 		items: [
 			{
-				id: '/vault/$vaultId/settings/about',
+				id: '/vault/settings/about',
 				label: 'About',
 				icon: (
 					<HugeiconsIcon
@@ -100,8 +103,15 @@ export function SettingsNav() {
 	const matchRoute = useMatchRoute()
 
 	return (
-		<nav className="bg-sidebar flex w-56 shrink-0 flex-col border-r p-3">
-			<h1 className="mb-4 px-3 text-lg font-semibold">Settings</h1>
+		<nav className="flex w-56 shrink-0 flex-col p-3">
+			<h1
+				className={cn(
+					'mb-4 px-3 text-lg font-semibold',
+					is.macOS && 'mt-10'
+				)}
+			>
+				Settings
+			</h1>
 
 			<div className="min-h-0 flex-1 overflow-y-auto">
 				{STATIC_GROUPS.map((group, groupIndex) => (
@@ -109,7 +119,7 @@ export function SettingsNav() {
 						key={group.label}
 						className={groupIndex > 0 ? 'mt-4' : ''}
 					>
-						<h2 className="text-muted-foreground/60 mb-1 px-3 text-[10px] font-medium tracking-[0.1em] uppercase">
+						<h2 className="text-muted-foreground/60 mb-1 px-3 text-[10px] font-medium tracking-widest uppercase">
 							{group.label}
 						</h2>
 						<div className="flex flex-col">
@@ -136,7 +146,7 @@ export function SettingsNav() {
 
 				{/* Dynamic Projects group - placeholder for now */}
 				<div className="mt-4">
-					<h2 className="text-muted-foreground/60 mb-1 px-3 text-[10px] font-medium tracking-[0.1em] uppercase">
+					<h2 className="text-muted-foreground/60 mb-1 px-3 text-[10px] font-medium tracking-widest uppercase">
 						Projects
 					</h2>
 					<div className="flex flex-col">

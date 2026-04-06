@@ -3,15 +3,13 @@ import { createFileRoute, useParams } from '@tanstack/react-router'
 
 import { SettingsContent, SettingsSection } from '@renderer/components/settings'
 
-export const Route = createFileRoute(
-	'/vault/$vaultId/settings/projects/$projectId'
-)({
+export const Route = createFileRoute('/vault/settings/projects/$projectId')({
 	component: ProjectSettingsPage,
 })
 
 function ProjectSettingsPage() {
 	const { projectId } = useParams({
-		from: '/vault/$vaultId/settings/projects/$projectId',
+		from: '/vault/settings/projects/$projectId',
 	})
 
 	return (
