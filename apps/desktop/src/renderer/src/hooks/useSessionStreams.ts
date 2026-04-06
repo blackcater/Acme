@@ -12,15 +12,19 @@ import {
 } from '@renderer/stores/atoms/session'
 import type { SessionEvent } from '@renderer/types/session'
 
+// Session stream type - has cancel() method and is async iterable
+interface SessionStream {
+	cancel: () => void
+	[Symbol.asyncIterator]: () => AsyncIterator<SessionEvent>
+}
+
 /**
  * Hook to manage multiple Session streaming connections
  * Each Session's stream is processed in an independent async context
  */
 export function useSessionStreams() {
 	const store = useStore()
-	const streamsRef = useRef<Map<string, AsyncIterable<SessionEvent>>>(
-		new Map()
-	)
+	const streamsRef = useRef<Map<string, SessionStream>>(new Map())
 
 	/**
 	 * Start streaming for a specific Session
