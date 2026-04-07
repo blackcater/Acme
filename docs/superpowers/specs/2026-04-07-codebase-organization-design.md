@@ -6,7 +6,7 @@
 
 当前桌面应用项目采用类似 Feature-Sliced Design (FSD) 的代码组织方式。项目功能类似 Codex Desktop，需要支持：
 - 多项目管理
-- Thread（会话）管理
+- Thread（会话）管理，支持本地/Worktree/远程沙箱多种运行模式
 - Agent 集成
 - Git 功能（Diff、Commit、Worktree）
 - 集成终端
@@ -19,6 +19,14 @@
 - **测试友好** - 各层可独立测试
 - **快速迭代** - 便于添加新功能
 - **职责清晰** - 每层职责明确，边界清晰
+
+### 1.3 核心原则
+
+| 层级 | 原则 |
+|------|------|
+| **atom** | 纯数据容器，依赖 domain entity |
+| **service** | 基于 entity 和其他 service 组合业务逻辑 |
+| **hook** | 基于 atom 和 service，给组件使用 |
 
 ---
 
@@ -52,9 +60,8 @@ src/renderer/src/
 │   │   ├── project.ts
 │   │   ├── agent.ts
 │   │   └── message.ts
-│   ├── events/             # 领域事件
-│   │   └── thread.events.ts
-│   └── index.ts
+│   └── events/             # 领域事件
+│       └── thread.events.ts
 │
 ├── infrastructure/            # 技术基础设施
 │   ├── ipc/               # Electron IPC 调用
@@ -67,10 +74,10 @@ src/renderer/src/
 │   └── logger/            # 日志
 │
 ├── services/                  # 服务层
-│   ├── thread.ts           # 线程服务
-│   ├── project.ts          # 项目服务
-│   ├── agent.ts            # Agent 服务
-│   ├── chat.ts             # 聊天服务
+│   ├── thread.service.ts   # 线程服务
+│   ├── project.service.ts   # 项目服务
+│   ├── agent.service.ts     # Agent 服务
+│   ├── chat.service.ts     # 聊天服务
 │   └── index.ts
 │
 ├── features/                  # 功能模块
@@ -120,15 +127,33 @@ infrastructure/ (技术实现，被调用)
 
 ### 3.2 各层职责
 
-| 层次 | 职责 | 包含内容 |
-|------|------|---------|
-| **routes/** | 路由组件，组合 features | 页面布局、路由参数传递 |
-| **features/components/** | UI 展示 | 渲染、用户事件、组合 hooks |
-| **features/hooks/** | UI 逻辑 | 组合 atom、React Query、调用 service |
-| **features/stores/** | UI 状态 | feature 私有 atom |
-| **services/** | 业务逻辑 | 编排操作、规则验证、事务 |
-| **domain/models/** | 领域模型 | 实体定义、值对象 |
-| **infrastructure/** | 技术实现 | IPC、HTTP、Storage、React Query、Zod Schema |
+| 层次                     | 职责                    | 包含内容                                    |
+| ------------------------ | ----------------------- | ------------------------------------------- |
+| **routes/**              | 路由组件，组合 features | 页面布局、路由参数传递                      |
+| **features/components/** | UI 展示                 | 渲染、用户事件、组合 hooks                  |
+| **features/hooks/**      | UI 逻辑                 | 组合 atom、React Query、调用 service        |
+| **features/stores/**     | UI 状态                 | feature 私有 atom（依赖 domain entity）       |
+| **services/**            | 业务逻辑                | 编排操作、规则验证、事务                    |
+| **domain/models/**       | 领域模型                | 实体定义（type/interface）                   |
+| **infrastructure/**      | 技术实现                | IPC、HTTP、Storage、React Query、Zod Schema |
+
+### 3.3 数据流动
+
+```
+IPC/HTTP 收到数据
+    ↓
+infrastructure 层：Zod 格式校验
+    ↓
+service 层：业务逻辑处理
+    ↓
+domain 层：Entity（纯数据）
+    ↓
+atom：存储 entity
+    ↓
+hook：组合 atom + service
+    ↓
+component：使用 hook
+```
 
 ---
 
@@ -136,21 +161,66 @@ infrastructure/ (技术实现，被调用)
 
 ### 4.1 Domain 层
 
-**职责：** 定义核心领域模型，与技术实现无关
+**职责：** 定义核心领域模型（TypeScript type/interface），与技术实现无关
+
+**注意：** Entity 是纯数据，不是 class，没有方法
 
 ```typescript
 // domain/models/thread.ts
-export interface Thread {
+
+// ============ 基础类型 ============
+interface BaseThread {
   id: string
-  vaultId: string
   title: string
   status: 'active' | 'archived'
-  agentConfig: AgentConfig
   createdAt: number
   updatedAt: number
 }
 
-export interface Message {
+// ============ 不同运行模式的 Thread（Discriminated Union） ============
+interface LocalThread extends BaseThread {
+  mode: 'local'
+  projectPath: string           // 本地项目路径
+}
+
+interface WorktreeThread extends BaseThread {
+  mode: 'worktree'
+  projectPath: string           // 主仓库路径
+  branchName: string          // worktree 分支名
+  worktreePath: string        // worktree 目录
+}
+
+interface RemoteThread extends BaseThread {
+  mode: 'remote'
+  sandboxId: string           // 沙箱实例 ID
+  sandboxEndpoint: string     // 沙箱地址
+  sandboxRegion?: string      // 区域（可选）
+}
+
+// ============ 联合类型 ============
+type Thread = LocalThread | WorktreeThread | RemoteThread
+
+// ============ 类型守卫 ============
+function isLocalThread(t: Thread): t is LocalThread {
+  return t.mode === 'local'
+}
+
+function isWorktreeThread(t: Thread): t is WorktreeThread {
+  return t.mode === 'worktree'
+}
+
+function isRemoteThread(t: Thread): t is RemoteThread {
+  return t.mode === 'remote'
+}
+
+// ============ 输入类型 ============
+type CreateThreadInput = 
+  | { mode: 'local'; projectPath: string; title?: string }
+  | { mode: 'worktree'; projectPath: string; branchName: string; title?: string }
+  | { mode: 'remote'; sandboxEndpoint: string; title?: string }
+
+// ============ Message ============
+interface Message {
   id: string
   threadId: string
   role: 'user' | 'assistant'
@@ -159,19 +229,8 @@ export interface Message {
   timestamp: number
 }
 
-export interface CreateThreadInput {
-  vaultId: string
-  title?: string
-  agentProvider: 'claude' | 'openai' | 'gemini'
-}
-
-export interface SendMessageInput {
-  threadId: string
-  content: string
-}
-
 // domain/models/project.ts
-export interface Project {
+interface Project {
   id: string
   name: string
   path: string
@@ -179,7 +238,7 @@ export interface Project {
 }
 
 // domain/models/agent.ts
-export interface Agent {
+interface Agent {
   id: string
   threadId: string
   provider: 'claude' | 'openai' | 'gemini'
@@ -189,23 +248,43 @@ export interface Agent {
 
 ### 4.2 Infrastructure 层
 
-**职责：** 技术实现，数据获取入口
+**职责：** 技术实现，数据获取入口。**不依赖 domain 层**，只暴露 IPC 调用方法
 
 ```typescript
-// infrastructure/ipc/index.ts
-export const ipcClient = {
-  thread: {
-    getById: (id: string) =>
-      window.api.rpc.call('thread.get', { id }),
-    create: (data: CreateThreadInput) =>
-      window.api.rpc.call('thread.create', data),
-    sendMessage: (data: SendMessageInput) =>
-      window.api.rpc.call('thread.sendMessage', data),
+// infrastructure/ipc/thread.ts
+export const threadApi = {
+  getById: (id: string) =>
+    window.api.rpc.call('thread.get', { id }),
+
+  create: (data: CreateThreadInput) =>
+    window.api.rpc.call('thread.create', data),
+
+  delete: (id: string) =>
+    window.api.rpc.call('thread.delete', { id }),
+}
+
+// 按模式分发的 API
+export const threadModeApi = {
+  local: {
+    sendMessage: (params: { threadId: string; content: string }) =>
+      window.api.rpc.call('local.sendMessage', params),
   },
-  project: {
-    list: () => window.api.rpc.call('project.list'),
-    getById: (id: string) => window.api.rpc.call('project.get', { id }),
+  worktree: {
+    sendMessage: (params: { threadId: string; content: string; worktreePath: string }) =>
+      window.api.rpc.call('worktree.sendMessage', params),
   },
+  remote: {
+    sendMessage: (params: { threadId: string; content: string; sandboxEndpoint: string }) =>
+      window.api.rpc.call('remote.sendMessage', params),
+  },
+}
+
+// infrastructure/ipc/project.ts
+export const projectApi = {
+  list: () => window.api.rpc.call('project.list'),
+  getById: (id: string) => window.api.rpc.call('project.get', { id }),
+  create: (data: CreateProjectInput) =>
+    window.api.rpc.call('project.create', data),
 }
 
 // infrastructure/schemas/thread.schemas.ts
@@ -217,87 +296,144 @@ export const SendMessageSchema = z.object({
 })
 
 export const CreateThreadSchema = z.object({
-  vaultId: z.string().min(1),
+  mode: z.enum(['local', 'worktree', 'remote']),
+  projectPath: z.string().optional(),
+  branchName: z.string().optional(),
+  worktreePath: z.string().optional(),
+  sandboxEndpoint: z.string().optional(),
   title: z.string().min(1).max(255).optional(),
-  agentProvider: z.enum(['claude', 'openai', 'gemini']),
 })
 ```
 
 ### 4.3 Services 层
 
-**职责：** 业务逻辑，编排操作，规则验证
+**职责：** 业务逻辑，基于 domain entity 和其他 service 组合
 
 ```typescript
-// services/thread.ts
-import { ipcClient } from '@infrastructure/ipc'
-import {
-  SendMessageSchema,
-  CreateThreadSchema,
-} from '@infrastructure/schemas'
+// services/thread.service.ts
+import type { Thread, CreateThreadInput } from '@domain/models'
+import { threadApi, threadModeApi } from '@infrastructure/ipc/thread'
+import { projectApi } from '@infrastructure/ipc/project'
+import { SendMessageSchema, CreateThreadSchema } from '@infrastructure/schemas'
 import { AppError, ThreadNotFoundError } from '@shared/errors'
 
 export const threadService = {
-  async getThread(id: string) {
-    const thread = await ipcClient.thread.getById(id)
-    if (!thread) {
-      throw new ThreadNotFoundError(id)
-    }
-    return thread
+  async getById(id: string): Promise<Thread | null> {
+    const thread = await threadApi.getById(id)
+    return thread ?? null
   },
 
-  async createThread(input: unknown) {
+  async create(input: unknown): Promise<Thread> {
     // 1. 格式校验
     const data = CreateThreadSchema.parse(input)
 
-    // 2. 业务校验
-    const project = await ipcClient.project.getById(data.vaultId)
-    if (!project) {
-      throw new AppError('Project not found', 'PROJECT_NOT_FOUND', 404)
+    // 2. 业务校验（本地模式需要验证项目存在）
+    if (data.mode === 'local' || data.mode === 'worktree') {
+      const project = await projectApi.getById(data.projectPath)
+      if (!project) {
+        throw new AppError('Project not found', 'PROJECT_NOT_FOUND', 404)
+      }
     }
 
     // 3. 创建
-    return ipcClient.thread.create(data)
+    return threadApi.create(data)
   },
 
-  async sendMessage(input: unknown) {
+  async sendMessage(threadId: string, content: string, thread: Thread): Promise<Message> {
     // 1. 格式校验
-    const data = SendMessageSchema.parse(input)
+    const data = SendMessageSchema.parse({ threadId, content })
 
     // 2. 业务校验
-    const thread = await this.getThread(data.threadId)
     if (thread.status === 'archived') {
       throw new AppError('Thread is archived', 'THREAD_ARCHIVED', 400)
     }
 
-    // 3. 发送
-    return ipcClient.thread.sendMessage(data)
+    // 3. 根据 mode 分发到不同 API
+    const api = threadModeApi[thread.mode]
+    return api.sendMessage({
+      threadId,
+      content,
+      ...thread,  // 展开 thread 特有字段
+    })
+  },
+}
+
+// services/project.service.ts
+import { projectApi } from '@infrastructure/ipc/project'
+
+export const projectService = {
+  async list() {
+    return projectApi.list()
+  },
+
+  async getById(id: string) {
+    return projectApi.getById(id)
   },
 }
 ```
 
 ### 4.4 Features 层
 
-**职责：** UI 组件 + UI 逻辑 hooks + feature 私有状态
+**职责：** UI 组件 + UI 逻辑 hooks + feature 私有 atom
+
+#### 4.4.1 Atom（依赖 Domain Entity）
 
 ```typescript
-// features/chat/stores/messages.ts
+// features/thread/stores/thread.store.ts
+import { atom } from 'jotai'
+import type { Thread } from '@domain/models'
+
+// atom 存储 entity
+export const threadAtom = atom<Thread | null>(null)
+
+// 派生 atom
+export const threadModeAtom = atom(
+  (get) => get(threadAtom)?.mode
+)
+
+// features/chat/stores/messages.store.ts
 import { atom } from 'jotai'
 import type { Message } from '@domain/models'
 
 export const messagesAtom = atom<Message[]>([])
 export const streamingAtom = atom<'idle' | 'streaming'>('idle')
+```
+
+#### 4.4.2 Hook（基于 Atom + Service）
+
+```typescript
+// features/thread/hooks/use-thread.ts
+import { useAtom } from 'jotai'
+import { threadAtom } from '../stores/thread.store'
+import { threadService } from '@services/thread.service'
+
+export function useThread(threadId: string) {
+  const [thread, setThread] = useAtom(threadAtom)
+
+  // service 返回 entity → 存入 atom
+  const loadThread = async () => {
+    const data = await threadService.getById(threadId)
+    setThread(data)
+  }
+
+  return { thread, loadThread }
+}
 
 // features/chat/hooks/use-send-message.ts
 import { useCallback } from 'react'
 import { useAtom } from 'jotai'
-import { messagesAtom, streamingAtom } from '../stores/messages'
-import { threadService } from '@services/thread'
+import { messagesAtom, streamingAtom } from '../stores/messages.store'
+import { threadService } from '@services/thread.service'
+import { useThread } from '../thread/hooks/use-thread'
 
 export function useSendMessage(threadId: string) {
   const [messages, setMessages] = useAtom(messagesAtom)
   const [isStreaming, setIsStreaming] = useAtom(streamingAtom)
+  const { thread } = useThread(threadId)
 
   const send = useCallback(async (content: string) => {
+    if (!thread) return
+
     // 乐观更新
     const optimisticMessage: Message = {
       id: crypto.randomUUID(),
@@ -310,17 +446,62 @@ export function useSendMessage(threadId: string) {
 
     setIsStreaming(true)
     try {
-      const response = await threadService.sendMessage({ threadId, content })
+      // service 返回 entity
+      const response = await threadService.sendMessage(
+        threadId,
+        content,
+        thread
+      )
       setMessages(prev => [...prev, response])
     } catch (error) {
-      // 错误处理
       console.error('Failed to send message:', error)
     } finally {
       setIsStreaming(false)
     }
-  }, [threadId, setMessages, setIsStreaming])
+  }, [threadId, thread, setMessages, setIsStreaming])
 
   return { send, isStreaming }
+}
+```
+
+#### 4.4.3 Component（使用 Hook）
+
+```typescript
+// features/thread/components/ThreadView.tsx
+import { useThread } from '../hooks/use-thread'
+
+export function ThreadView({ threadId }: { threadId: string }) {
+  const { thread } = useThread(threadId)
+
+  if (!thread) return <Loading />
+
+  return (
+    <div>
+      <ThreadHeader thread={thread} />
+
+      {/* 根据 mode 渲染不同内容 */}
+      {thread.mode === 'local' && (
+        <LocalIndicator projectPath={thread.projectPath} />
+      )}
+
+      {thread.mode === 'worktree' && (
+        <WorktreeIndicator
+          branchName={thread.branchName}
+          worktreePath={thread.worktreePath}
+        />
+      )}
+
+      {thread.mode === 'remote' && (
+        <RemoteIndicator
+          sandboxEndpoint={thread.sandboxEndpoint}
+          region={thread.sandboxRegion}
+        />
+      )}
+
+      <MessageList />
+      <Composer />
+    </div>
+  )
 }
 
 // features/chat/components/ChatView.tsx
@@ -411,12 +592,12 @@ React Query onError 捕获
 ```typescript
 // features/thread/hooks/use-thread.ts
 import { useQuery } from '@tanstack/react-query'
-import { threadService } from '@services/thread'
+import { threadService } from '@services/thread.service'
 
 export function useThread(threadId: string) {
   return useQuery({
     queryKey: ['thread', threadId],
-    queryFn: () => threadService.getThread(threadId),
+    queryFn: () => threadService.getById(threadId),
     enabled: !!threadId,
     retry: (failureCount, error) => {
       // 网络错误重试，业务错误不重试
@@ -446,29 +627,29 @@ export function ChatView({ threadId }: { threadId: string }) {
 
 ### 6.1 服务依赖关系
 
-| 服务 | 依赖 | 说明 |
-|------|------|------|
-| **Thread** | Project, Agent | 核心服务，可调用其他 |
-| **Chat** | Thread | 依赖 Thread |
-| **Project** | - | 无跨服务依赖 |
-| **Agent** | - | 无跨服务依赖 |
+| 服务        | 依赖           | 说明                 |
+| ----------- | -------------- | -------------------- |
+| **Thread**  | Project, Agent | 核心服务，可调用其他 |
+| **Chat**    | Thread         | 依赖 Thread          |
+| **Project** | -              | 无跨服务依赖         |
+| **Agent**   | -              | 无跨服务依赖         |
 
 ### 6.2 依赖规则
 
 **核心服务（Thread）可调用其他服务，其他服务只能调用核心服务**
 
 ```typescript
-// services/thread.ts
-import { projectService } from './project'
-import { agentService } from './agent'
+// services/thread.service.ts
+import { projectService } from './project.service'
+import { agentService } from './agent.service'
 
 export const threadService = {
-  async createThread(input: CreateThreadInput) {
+  async create(input: CreateThreadInput) {
     // 验证项目（跨服务）
-    const project = await projectService.getProject(input.vaultId)
+    const project = await projectService.getById(input.projectPath)
 
     // 创建线程
-    const thread = await ipcClient.thread.create(input)
+    const thread = await threadApi.create(input)
 
     // 初始化 Agent（跨服务）
     await agentService.createAgent({ threadId: thread.id })
@@ -477,11 +658,11 @@ export const threadService = {
   },
 }
 
-// services/chat.ts
+// services/chat.service.ts
 export const chatService = {
-  async sendMessage(input: SendMessageInput) {
+  async sendMessage(input, thread) {
     // Chat 不直接调用 project/agent，只调用 thread
-    return threadService.sendMessage(input)
+    return threadService.sendMessage(input, thread)
   },
 }
 ```
@@ -511,12 +692,12 @@ export const queryClient = new QueryClient({
 ```typescript
 // features/project/hooks/use-projects.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { projectService } from '@services/project'
+import { projectService } from '@services/project.service'
 
 export function useProjects() {
   return useQuery({
     queryKey: ['projects'],
-    queryFn: () => projectService.listProjects(),
+    queryFn: () => projectService.list(),
   })
 }
 
@@ -525,7 +706,7 @@ export function useCreateProject() {
 
   return useMutation({
     mutationFn: (params: CreateProjectInput) =>
-      projectService.createProject(params),
+      projectService.create(params),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projects'] })
     },
@@ -556,8 +737,8 @@ export function useCreateProject() {
 ```typescript
 // 使用示例
 import type { Thread } from '@domain/models'          // Domain
-import { ipcClient } from '@infrastructure/ipc'      // Infrastructure
-import { threadService } from '@services/thread'     // Service
+import { threadApi } from '@infrastructure/ipc/thread' // Infrastructure
+import { threadService } from '@services/thread.service' // Service
 import { useSendMessage } from '@features/chat/hooks' // Feature Hooks
 import { Button } from '@acme-ai/ui'                 // UI 组件库
 ```
@@ -578,7 +759,8 @@ src/renderer/src/
 
 ### 阶段二：迁移 Domain 模型
 
-- 创建 `domain/models/` 下的实体定义
+- 创建 `domain/models/` 下的类型定义
+- 使用 Discriminated Union 建模 Thread 的不同模式
 - 迁移相关类型定义到 domain
 
 ### 阶段三：创建 Infrastructure 层
@@ -589,24 +771,35 @@ src/renderer/src/
 
 ### 阶段四：创建 Services 层
 
-- 创建 `services/thread.ts`
-- 创建 `services/project.ts`
+- 创建 `services/thread.service.ts`
+- 创建 `services/project.service.ts`
 - 迁移业务逻辑到 services
 
 ### 阶段五：调整 Features 层
 
 - 清理 components/hooks/stores
 - 让 hooks 调用 services 而不是直接调用 IPC
+- 确保 atom 依赖 domain entity
 
 ---
 
 ## 10. 总结
 
-| 层次 | 核心职责 | 可测试性 |
-|------|---------|---------|
-| **domain/** | 领域模型 | ✅ 纯数据，无依赖 |
-| **infrastructure/** | 技术实现 | ✅ Mock IPC |
-| **services/** | 业务逻辑 | ✅ Mock infrastructure |
-| **features/hooks/** | UI 逻辑 | ⚠️ 需要 React Testing Library |
-| **features/components/** | UI 展示 | ⚠️ 需要 React Testing Library |
-| **routes/** | 路由组合 | ✅ 可独立测试 |
+| 层次                     | 核心职责 | 可测试性                     |
+| ------------------------ | -------- | ---------------------------- |
+| **domain/**              | 领域模型（type） | ✅ 纯数据，无依赖             |
+| **infrastructure/**      | 技术实现 | ✅ Mock IPC                   |
+| **services/**            | 业务逻辑 | ✅ Mock infrastructure        |
+| **features/hooks/**      | UI 逻辑  | ⚠️ 需要 React Testing Library |
+| **features/components/** | UI 展示  | ⚠️ 需要 React Testing Library |
+| **features/stores/**     | UI 状态（atom） | ✅ 依赖 domain              |
+| **routes/**              | 路由组合 | ✅ 可独立测试                 |
+
+### 核心原则回顾
+
+| 层级 | 原则 |
+|------|------|
+| **atom** | 纯数据容器，依赖 domain entity |
+| **service** | 基于 entity 和其他 service 组合业务逻辑 |
+| **hook** | 基于 atom 和 service，给组件使用 |
+| **infrastructure** | 不依赖 domain，只提供技术实现 |
