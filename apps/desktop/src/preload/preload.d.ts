@@ -9,8 +9,32 @@ interface StoreAPI {
 	setLocale: (locale: string) => Promise<void>
 }
 
+interface FilesRpc {
+	list: (dirPath: string) => Promise<{
+		files: Array<{
+			name: string
+			path: string
+			type: 'file' | 'directory'
+			extension?: string
+		}>
+		error?: string
+	}>
+	search: (
+		query: string,
+		rootPath: string
+	) => Promise<{
+		results: Array<{
+			name: string
+			path: string
+			type: 'file' | 'directory'
+		}>
+		skippedCount: number
+	}>
+}
+
 interface API {
 	rpc: RpcClient
+	files: FilesRpc
 	store: StoreAPI
 }
 

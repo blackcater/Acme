@@ -1,18 +1,11 @@
 import { useCallback } from 'react'
 
-import type {
-	FileNodeData,
-	ListFilesResponse,
-	SearchFilesResponse,
-} from '../types'
+import type { FileNode } from '@/main/handlers/files'
 
 export function useFileOperations() {
 	const listFiles = useCallback(
-		async (dirPath: string): Promise<FileNodeData[]> => {
-			const response = (await window.api.rpc.call(
-				'/files/list',
-				dirPath
-			)) as ListFilesResponse
+		async (dirPath: string): Promise<FileNode[]> => {
+			const response = await window.api.files.list(dirPath)
 			if (response.error) {
 				console.error('Failed to list files:', response.error)
 				return []
@@ -31,15 +24,7 @@ export function useFileOperations() {
 		> => {
 			if (!query.trim()) return []
 			try {
-				const response = (await window.api.rpc.call(
-					'/files/search',
-					query,
-					rootPath
-				)) as SearchFilesResponse
-				if (response.error) {
-					console.error('Failed to search files:', response.error)
-					return []
-				}
+				const response = await window.api.files.search(query, rootPath)
 				return response.results
 			} catch (error) {
 				console.error('Failed to search files:', error)

@@ -1,7 +1,7 @@
-import { registerFilesHandlers } from './files'
+import { FilesHandler } from './files'
 import { registerSystemHandlers } from './system'
 
-export async function registerHandlers() {
-	await registerSystemHandlers()
-	await registerFilesHandlers()
+export function registerHandlers() {
+	registerSystemHandlers()
+	FilesHandler.registerHandlers()
 }

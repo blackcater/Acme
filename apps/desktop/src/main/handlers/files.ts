@@ -4,37 +4,72 @@ import * as path from 'node:path'
 import { Container } from '@/shared/di'
 import { ElectronRpcServer } from '@/shared/rpc'
 
-const skippedDirs: Array<{ path: string; error: string }> = []
+// ---------------------------------------------------------------------------
+// Shared types - exported for use by preload
+// ---------------------------------------------------------------------------
 
-function logSkipped(dir: string, error: string): void {
-	skippedDirs.push({ path: dir, error })
+export type FileNode = {
+	name: string
+	path: string
+	type: 'file' | 'directory'
+	extension?: string
 }
 
-function getDirKey(inode: number, device: number): string {
-	return `${device}:${inode}`
+export type SearchResult = {
+	name: string
+	path: string
+	type: 'file' | 'directory'
 }
 
-export async function registerFilesHandlers() {
-	const server = Container.inject(ElectronRpcServer)
+// ---------------------------------------------------------------------------
+// Utility types
+// ---------------------------------------------------------------------------
 
-	const router = server.router('files')
+/**
+ * Derives an RPC schema type from a handler class's method signatures.
+ * Maps each method to a function type with the same args and return type.
+ */
+type RpcSchema<Handler extends object> = {
+	[K in keyof Handler]: Handler[K] extends (...args: infer A) => infer R
+		? (...args: A) => R
+		: never
+}
 
-	router.handle('list', async (dirPath: string) => {
+// ---------------------------------------------------------------------------
+// Handler class - implementation + type source of truth
+// ---------------------------------------------------------------------------
+
+export class FilesHandler {
+	static readonly #skippedDirs: Array<{ path: string; error: string }> = []
+
+	static #logSkipped(dir: string, error: string): void {
+		FilesHandler.#skippedDirs.push({ path: dir, error })
+	}
+
+	static #getDirKey(inode: number, device: number): string {
+		return `${device}:${inode}`
+	}
+
+	async list(
+		dirPath: string
+	): Promise<{ files: FileNode[]; error?: string }> {
 		try {
 			const entries = await fs.readdir(dirPath, { withFileTypes: true })
-			const files = entries.map((entry) => {
+			const files: FileNode[] = entries.map((entry): FileNode => {
 				const fullPath = path.join(dirPath, entry.name)
-				const extension = entry.isFile()
-					? path.extname(entry.name).toLowerCase().slice(1)
-					: undefined
-				return {
+				const result: FileNode = {
 					name: entry.name,
 					path: fullPath,
 					type: entry.isDirectory() ? 'directory' : 'file',
-					extension,
 				}
+				if (entry.isFile()) {
+					result.extension = path
+						.extname(entry.name)
+						.toLowerCase()
+						.slice(1)
+				}
+				return result
 			})
-			// Sort: directories first, then files, both alphabetically
 			files.sort((a, b) => {
 				if (a.type !== b.type) return a.type === 'directory' ? -1 : 1
 				return a.name.localeCompare(b.name)
@@ -43,34 +78,27 @@ export async function registerFilesHandlers() {
 		} catch (error) {
 			return { files: [], error: String(error) }
 		}
-	})
+	}
 
-	router.handle('search', async (query: string, rootPath: string) => {
-		// Reset skipped dirs for this search
-		skippedDirs.length = 0
-
-		const results: Array<{
-			name: string
-			path: string
-			type: 'file' | 'directory'
-		}> = []
+	async search(
+		query: string,
+		rootPath: string
+	): Promise<{ results: SearchResult[]; skippedCount: number }> {
+		FilesHandler.#skippedDirs.length = 0
+		const results: SearchResult[] = []
 		const maxResults = 100
 		const maxDepth = 20
 		const visitedDirs = new Set<string>()
 
-		async function walk(dir: string, depth: number): Promise<void> {
-			if (results.length >= maxResults) return
-			if (depth > maxDepth) return
-
+		const walk = async (dir: string, depth: number): Promise<void> => {
+			if (results.length >= maxResults || depth > maxDepth) return
 			try {
-				// Check for symlink cycles using stat to get inode/device
 				const stats = await fs.stat(dir)
 				if (stats.isDirectory()) {
-					const dirKey = getDirKey(stats.ino, stats.dev)
+					const dirKey = FilesHandler.#getDirKey(stats.ino, stats.dev)
 					if (visitedDirs.has(dirKey)) return
 					visitedDirs.add(dirKey)
 				}
-
 				const entries = await fs.readdir(dir, { withFileTypes: true })
 				for (const entry of entries) {
 					if (results.length >= maxResults) break
@@ -89,11 +117,32 @@ export async function registerFilesHandlers() {
 					}
 				}
 			} catch (error) {
-				logSkipped(dir, String(error))
+				FilesHandler.#logSkipped(dir, String(error))
 			}
 		}
 
 		await walk(rootPath, 0)
-		return { results, skippedCount: skippedDirs.length }
-	})
+		return { results, skippedCount: FilesHandler.#skippedDirs.length }
+	}
+
+	// ---------------------------------------------------------------------------
+	// Registration
+	// ---------------------------------------------------------------------------
+
+	static registerHandlers(): void {
+		const server = Container.inject(ElectronRpcServer)
+		const router = server.router('files')
+		const handler = new FilesHandler()
+
+		router.handle('list', (dirPath) => handler.list(dirPath))
+		router.handle('search', (query, rootPath) =>
+			handler.search(query, rootPath)
+		)
+	}
 }
+
+// ---------------------------------------------------------------------------
+// RPC schema type - derived from class, used by preload to build typed facade
+// ---------------------------------------------------------------------------
+
+export type FilesRpcSchema = RpcSchema<FilesHandler>

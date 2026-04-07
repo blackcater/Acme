@@ -6,6 +6,37 @@ import { createRpc } from './utils'
 // Create singleton RPC client instance
 const rpc = createRpc()
 
+interface FilesListResult {
+	files: Array<{
+		name: string
+		path: string
+		type: 'file' | 'directory'
+		extension?: string
+	}>
+	error?: string
+}
+
+interface FilesSearchResult {
+	results: Array<{
+		name: string
+		path: string
+		type: 'file' | 'directory'
+	}>
+	skippedCount: number
+}
+
+interface FilesRpc {
+	list: (dirPath: string) => Promise<FilesListResult>
+	search: (query: string, rootPath: string) => Promise<FilesSearchResult>
+}
+
+const files: FilesRpc = {
+	list: (dirPath: string) =>
+		rpc.call<FilesListResult>('/files/list', dirPath),
+	search: (query: string, rootPath: string) =>
+		rpc.call<FilesSearchResult>('/files/search', query, rootPath),
+}
+
 const store = {
 	get: (key: 'firstLaunchDone'): Promise<boolean> =>
 		rpc.call('/system/store/get', key),
@@ -18,6 +49,7 @@ const store = {
 
 const api: API = {
 	rpc,
+	files,
 	store,
 }
 
