@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 
-import type { FileNode } from '@/main/handlers/files'
+import type { FileNode } from '@/main/handlers/files.schema'
 
 export function useFileOperations() {
 	const listFiles = useCallback(

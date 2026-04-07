@@ -13,6 +13,8 @@ export {
 	ElectronRpcClient,
 	ElectronRpcServer,
 	IpcRendererRpcClient,
+	buildCallApi,
+	buildStreamApi,
 } from './electron'
 
 // HTTP transport

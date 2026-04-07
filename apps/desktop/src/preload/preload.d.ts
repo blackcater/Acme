@@ -1,5 +1,5 @@
+import type { FilesHandler } from '@/main/handlers/files'
 import type { RpcClient } from '@/shared/rpc'
-import type { IpcRendererRpcClient } from '@/shared/rpc/electron'
 import type { AppInfo } from '@/types'
 
 interface StoreAPI {
@@ -9,38 +9,14 @@ interface StoreAPI {
 	setLocale: (locale: string) => Promise<void>
 }
 
-interface FilesRpc {
-	list: (dirPath: string) => Promise<{
-		files: Array<{
-			name: string
-			path: string
-			type: 'file' | 'directory'
-			extension?: string
-		}>
-		error?: string
-	}>
-	search: (
-		query: string,
-		rootPath: string
-	) => Promise<{
-		results: Array<{
-			name: string
-			path: string
-			type: 'file' | 'directory'
-		}>
-		skippedCount: number
-	}>
-}
-
-interface API {
-	rpc: RpcClient
-	files: FilesRpc
+export interface API {
+	files: Pick<FilesHandler, 'list' | 'search'>
 	store: StoreAPI
+	rpc: RpcClient
 }
 
 declare global {
 	interface Window {
-		rpc: RpcClient
 		api: API
 		__appInfo: AppInfo
 	}

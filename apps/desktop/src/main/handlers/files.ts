@@ -2,38 +2,9 @@ import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 
 import { Container } from '@/shared/di'
-import { ElectronRpcServer } from '@/shared/rpc'
+import { ElectronRpcServer, type RpcSchema } from '@/shared/rpc'
 
-// ---------------------------------------------------------------------------
-// Shared types - exported for use by preload
-// ---------------------------------------------------------------------------
-
-export type FileNode = {
-	name: string
-	path: string
-	type: 'file' | 'directory'
-	extension?: string
-}
-
-export type SearchResult = {
-	name: string
-	path: string
-	type: 'file' | 'directory'
-}
-
-// ---------------------------------------------------------------------------
-// Utility types
-// ---------------------------------------------------------------------------
-
-/**
- * Derives an RPC schema type from a handler class's method signatures.
- * Maps each method to a function type with the same args and return type.
- */
-type RpcSchema<Handler extends object> = {
-	[K in keyof Handler]: Handler[K] extends (...args: infer A) => infer R
-		? (...args: A) => R
-		: never
-}
+import type { FileNode, SearchResult } from './files.schema'
 
 // ---------------------------------------------------------------------------
 // Handler class - implementation + type source of truth
@@ -125,9 +96,9 @@ export class FilesHandler {
 		return { results, skippedCount: FilesHandler.#skippedDirs.length }
 	}
 
-	// ---------------------------------------------------------------------------
+	// -----------------------------------------------------------------------
 	// Registration
-	// ---------------------------------------------------------------------------
+	// -----------------------------------------------------------------------
 
 	static registerHandlers(): void {
 		const server = Container.inject(ElectronRpcServer)
