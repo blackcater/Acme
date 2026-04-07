@@ -39,9 +39,7 @@ export class ElectronRpcServer implements RpcServer {
 		const eventPath = this.#normalizeEvent(event)
 		const isOptions = typeof optionsOrHandler !== 'function'
 		const handlerFn = isOptions ? maybeHandler! : optionsOrHandler
-		const options = isOptions
-			? (optionsOrHandler as Rpc.HandleOptions)
-			: undefined
+		const options = isOptions ? optionsOrHandler : undefined
 
 		this.#handlers.set(eventPath, { handler: handlerFn, options })
 
