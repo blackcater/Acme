@@ -136,3 +136,35 @@ export type HandlerReturn<T> = T extends (...args: any[]) => infer R
 		? P
 		: never
 	: never
+
+/**
+ * Extracts method signatures from Handler for specified method names.
+ */
+export type HandlerMethods<
+	Handler extends object,
+	Methods extends ReadonlyArray<keyof Handler>,
+> = {
+	[K in Methods[number]]: Handler[K]
+}
+
+/**
+ * Extracts method names from Handler where return type is T | Promise<T> (not AsyncIterator).
+ */
+export type CallMethodNames<Handler extends object> = {
+	[K in keyof Handler]: Handler[K] extends (...args: any) => infer R
+		? R extends AsyncIterator<unknown, unknown, unknown>
+			? never
+			: K
+		: never
+}[keyof Handler]
+
+/**
+ * Extracts method names from Handler where return type is AsyncIterator<T>.
+ */
+export type StreamMethodNames<Handler extends object> = {
+	[K in keyof Handler]: Handler[K] extends (
+		...args: any
+	) => AsyncIterator<unknown, unknown, unknown>
+		? K
+		: never
+}[keyof Handler]

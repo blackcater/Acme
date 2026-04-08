@@ -1,16 +1,67 @@
-import { ipcRenderer } from 'electron'
+import type {
+	CallMethodNames,
+	HandlerMethods,
+	RpcClient,
+	StreamMethodNames,
+} from '@/shared/rpc'
 
-import type { RpcClient } from '@/shared/rpc'
-import { IpcRendererRpcClient } from '@/shared/rpc/electron'
-
-export function createRpc(): RpcClient {
-	const rpc = new IpcRendererRpcClient(ipcRenderer)
-
+export function createRpc(client: RpcClient): RpcClient {
 	return {
-		clientId: rpc.clientId,
-		groupId: rpc.groupId,
-		call: (event: string, ...args: any[]) => rpc.call(event, ...args),
-		stream: (event: string, ...args: any[]) => rpc.stream(event, ...args),
-		onEvent: (event: string, listener: any) => rpc.onEvent(event, listener),
+		clientId: client.clientId,
+		groupId: client.groupId,
+		call: (event: string, ...args: any[]) => client.call(event, ...args),
+		stream: (event: string, ...args: any[]) =>
+			client.stream(event, ...args),
+		onEvent: (event: string, listener: any) =>
+			client.onEvent(event, listener),
 	} as any satisfies RpcClient
+}
+
+/**
+ * Builds a typed API facade for call-only methods (rpc.call).
+ *
+ * @example
+ * ```typescript
+ * const files = buildCallApi<FilesHandler>('files', ['list', 'search'], rpc)
+ * await files.list(dirPath)  // uses rpc.call
+ * await files.search(query, rootPath)  // uses rpc.call
+ * ```
+ */
+export function buildCallApi<Handler extends object>(
+	namespace: string,
+	methods: ReadonlyArray<CallMethodNames<Handler>>,
+	rpc: RpcClient
+): HandlerMethods<Handler, typeof methods> {
+	const api = {} as Record<string, (...args: unknown[]) => unknown>
+	for (const method of methods) {
+		const methodPath = `/${namespace}/${String(method)}`
+		api[String(method)] = (...args: unknown[]) =>
+			rpc.call(methodPath, ...args)
+	}
+	return api as HandlerMethods<Handler, typeof methods>
+}
+
+/**
+ * Builds a typed API facade for stream-only methods (rpc.stream).
+ *
+ * @example
+ * ```typescript
+ * const chat = buildStreamApi<ChatHandler>('chat', ['query'], rpc)
+ * for await (const chunk of chat.query(msg)) {  // uses rpc.stream
+ *   // ...
+ * }
+ * ```
+ */
+export function buildStreamApi<Handler extends object>(
+	namespace: string,
+	methods: ReadonlyArray<StreamMethodNames<Handler>>,
+	rpc: RpcClient
+): HandlerMethods<Handler, typeof methods> {
+	const api = {} as Record<string, (...args: unknown[]) => unknown>
+	for (const method of methods) {
+		const methodPath = `/${namespace}/${String(method)}`
+		api[String(method)] = (...args: unknown[]) =>
+			rpc.stream(methodPath, ...args)
+	}
+	return api as HandlerMethods<Handler, typeof methods>
 }

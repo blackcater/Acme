@@ -1,7 +1,7 @@
 import { atom } from 'jotai'
-import { atomFamily } from 'jotai/utils'
+import { atomFamily } from 'jotai-family'
 
-import type { Session, Message } from '@/types/session'
+import type { Session, Message } from '@renderer/types'
 
 /**
  * Session atom family - each session has its own isolated atom

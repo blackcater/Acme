@@ -1,22 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { SettingsContent, SettingsSection } from '@renderer/components/settings'
+import { KeyboardPage } from '@renderer/features/settings/pages/KeyboardPage'
 
 export const Route = createFileRoute('/vault/settings/keyboard')({
 	component: KeyboardPage,
 })
-
-function KeyboardPage() {
-	return (
-		<SettingsContent>
-			<SettingsSection
-				title="Keyboard Shortcuts"
-				description="View and customize keyboard shortcuts"
-			>
-				<div className="text-muted-foreground text-sm">
-					Keyboard shortcuts configuration coming soon.
-				</div>
-			</SettingsSection>
-		</SettingsContent>
-	)
-}

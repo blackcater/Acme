@@ -1,16 +1,14 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 
-import type { FilesHandler } from '@/main/handlers/files'
-import { buildCallApi } from '@/shared/rpc'
+import type { FilesHandler } from '@main/handlers/files'
+
+import { IpcRendererRpcClient } from '@/shared/rpc/electron'
 
 import type { API } from './preload'
-import { createRpc } from './utils'
+import { buildCallApi, createRpc } from './utils'
 
-// Create singleton RPC client instance
-const rpc = createRpc()
-
-// Build APIs from handler
-const files = buildCallApi<FilesHandler>('files', ['list', 'search'], rpc)
+const client = new IpcRendererRpcClient(ipcRenderer)
+const rpc = createRpc(client)
 
 const store = {
 	get: (key: 'firstLaunchDone'): Promise<boolean> =>
@@ -23,7 +21,7 @@ const store = {
 }
 
 const api: API = {
-	files,
+	files: buildCallApi<FilesHandler>('files', ['list', 'search'], rpc),
 	store,
 	rpc,
 }
