@@ -1,9 +1,9 @@
-import { describe, it, expect, vi, beforeEach } from 'bun:test'
+import { describe, it, expect, vi } from 'bun:test'
 
 import type { IpcMain, WebContents } from 'electron'
 
-import type { IWindowRegistry } from '../types'
 import { RpcError } from '../RpcError'
+import type { IWindowRegistry } from '../types'
 import { ElectronRpcServer } from './ElectronRpcServer'
 
 const createMockRegistry = (): IWindowRegistry => ({
@@ -136,7 +136,9 @@ describe('ElectronRpcServer', () => {
 	describe('error handling', () => {
 		it('should register IPC handler for error throwing methods', () => {
 			const mockRegistry = createMockRegistry()
-			mockRegistry.getClientIdByWebContents = vi.fn().mockReturnValue('client-42')
+			mockRegistry.getClientIdByWebContents = vi
+				.fn()
+				.mockReturnValue('client-42')
 			const mockIpcMain = createMockIpcMain()
 
 			const server = new ElectronRpcServer(mockRegistry, mockIpcMain)
@@ -153,7 +155,9 @@ describe('ElectronRpcServer', () => {
 
 		it('should send unauthorized error when clientId is unknown', async () => {
 			const mockRegistry = createMockRegistry()
-			mockRegistry.getClientIdByWebContents = vi.fn().mockReturnValue(null)
+			mockRegistry.getClientIdByWebContents = vi
+				.fn()
+				.mockReturnValue(null)
 			const mockIpcMain = createMockIpcMain()
 			const mockWebContents = createMockWebContents()
 
