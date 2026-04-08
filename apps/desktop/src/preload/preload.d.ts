@@ -1,4 +1,5 @@
 import type { FilesHandler } from '@/main/handlers/files'
+import type { GitHandler } from '@/main/handlers/git'
 import type { RpcClient } from '@/shared/rpc'
 import type { AppInfo } from '@/types'
 
@@ -11,6 +12,26 @@ interface StoreAPI {
 
 export interface API {
 	files: Pick<FilesHandler, 'list' | 'search'>
+	git: Pick<
+		GitHandler,
+		| 'status'
+		| 'branches'
+		| 'currentBranch'
+		| 'log'
+		| 'diffStat'
+		| 'stage'
+		| 'unstage'
+		| 'stageAll'
+		| 'unstageAll'
+		| 'discard'
+		| 'commit'
+		| 'checkout'
+		| 'createBranch'
+		| 'push'
+		| 'pull'
+		| 'fetch'
+		| 'generateCommitMessage'
+	>
 	store: StoreAPI
 	rpc: RpcClient
 }

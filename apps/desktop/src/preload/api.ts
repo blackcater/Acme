@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
 import type { FilesHandler } from '@main/handlers/files'
+import type { GitHandler } from '@main/handlers/git'
 
 import { IpcRendererRpcClient } from '@/shared/rpc/electron'
 
@@ -22,6 +23,29 @@ const store = {
 
 const api: API = {
 	files: buildCallApi<FilesHandler>('files', ['list', 'search'], rpc),
+	git: buildCallApi<GitHandler>(
+		'git',
+		[
+			'status',
+			'branches',
+			'currentBranch',
+			'log',
+			'diffStat',
+			'stage',
+			'unstage',
+			'stageAll',
+			'unstageAll',
+			'discard',
+			'commit',
+			'checkout',
+			'createBranch',
+			'push',
+			'pull',
+			'fetch',
+			'generateCommitMessage',
+		],
+		rpc
+	),
 	store,
 	rpc,
 }
