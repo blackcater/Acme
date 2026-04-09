@@ -61,7 +61,7 @@ export class GitHandler {
 		let additions = 0
 		let deletions = 0
 		for (const line of result.split('\n')) {
-			const match = line.match(/\+(\d+).*?-(d+)/)
+			const match = line.match(/\+(\d+).*?-\d+/)
 			if (match) {
 				additions += parseInt(match[1], 10)
 				deletions += parseInt(match[2], 10)
