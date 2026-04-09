@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react'
 
-import type { UIMessage } from '../../../../hooks/chat/useOutline'
+import type { UIMessage } from '@renderer/types/session'
 import { useOutline } from '../../../../hooks/chat/useOutline'
-import type { OutlineNode } from '../../../../hooks/chat/useOutline'
+import type { OutlineNode } from '@renderer/types/outline'
 import { OutlinePanelHeader } from './OutlinePanelHeader'
 import { OutlineTree } from './OutlineTree'
 
