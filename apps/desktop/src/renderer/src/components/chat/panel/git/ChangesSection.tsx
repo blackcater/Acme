@@ -1,5 +1,4 @@
-import { useGitActions } from '@renderer/hooks/chat/useGitActions'
-import { useGitStatus } from '@renderer/hooks/chat/useGitStatus'
+import { useGitActions, useGitStatus } from '@renderer/hooks'
 
 export function ChangesSection() {
 	const { status } = useGitStatus()

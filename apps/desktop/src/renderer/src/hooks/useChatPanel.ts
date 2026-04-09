@@ -3,7 +3,7 @@ import { useCallback } from 'react'
 import { useAtom } from 'jotai'
 
 import { panelAtom } from '@renderer/atoms'
-import type { PanelType } from '@renderer/types/panel'
+import type { PanelType } from '@renderer/types'
 
 /**
  * Hook to manage chat panel state

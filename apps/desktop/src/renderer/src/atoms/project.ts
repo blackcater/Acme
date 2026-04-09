@@ -1,7 +1,7 @@
 import { atom } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
 
-import type { Project } from '@renderer/types/project'
+import type { Project } from '@renderer/types'
 
 import { mockProjects } from './mock-data'
 

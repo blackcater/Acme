@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 
-import type { UIMessage } from '@renderer/types/session'
-import type { OutlineNode } from '@renderer/types/outline'
+import type { UIMessage, OutlineNode } from '@renderer/types'
 
 function getToolName(toolName: string): string {
 	// Extract readable tool name from tool call

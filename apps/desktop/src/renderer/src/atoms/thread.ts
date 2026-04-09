@@ -1,7 +1,6 @@
 import { atom } from 'jotai'
 
-import type { SortBy } from '@renderer/types/sidebar'
-import type { Thread } from '@renderer/types/thread'
+import type { SortBy, Thread } from '@renderer/types'
 
 import { mockPinnedThreadIds, mockThreads } from './mock-data'
 import { projectsAtom } from './project'

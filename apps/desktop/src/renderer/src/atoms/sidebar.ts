@@ -1,6 +1,6 @@
 import { atomWithStorage } from 'jotai/utils'
 
-import type { SidebarState } from '@renderer/types/sidebar'
+import type { SidebarState } from '@renderer/types'
 
 export const sidebarAtom = atomWithStorage<SidebarState>('sidebar-state', {
 	collapsed: false,

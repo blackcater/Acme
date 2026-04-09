@@ -12,7 +12,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import type {
 	OutlineNode as OutlineNodeType,
 	OutlineNodeType as NodeType,
-} from '@renderer/types/outline'
+} from '@renderer/types'
 
 interface OutlineNodeProps {
 	node: OutlineNodeType

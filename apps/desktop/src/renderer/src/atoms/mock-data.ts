@@ -1,5 +1,4 @@
-import type { Project } from '@renderer/types/project'
-import type { Thread } from '@renderer/types/thread'
+import type { Project, Thread } from '@renderer/types'
 
 export const mockProjects: Project[] = [
 	{ id: 'proj-1', title: 'Frontend Development', order: 0 },

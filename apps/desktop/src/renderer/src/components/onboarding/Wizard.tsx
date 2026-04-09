@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from 'framer-motion'
 
-import { useStep } from '@renderer/hooks/onboarding'
+import { useStep } from '@renderer/hooks'
 import { AgentStep } from './steps/AgentStep'
 import { ProviderStep } from './steps/ProviderStep'
 import { ReadyStep } from './steps/ReadyStep'

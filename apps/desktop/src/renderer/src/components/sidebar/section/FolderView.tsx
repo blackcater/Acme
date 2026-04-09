@@ -9,8 +9,7 @@ import {
 	pinnedThreadIdsAtom,
 	projectTreeAtom,
 } from '@renderer/atoms'
-import type { Project } from '@renderer/types'
-import type { Thread } from '@renderer/types/thread'
+import type { Project, Thread } from '@renderer/types'
 
 import { FolderCell } from '../cell/FolderCell'
 import { ThreadCell } from '../cell/ThreadCell'

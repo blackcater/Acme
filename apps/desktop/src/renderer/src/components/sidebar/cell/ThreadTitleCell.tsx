@@ -32,7 +32,7 @@ import type {
 	ShowMode,
 	SidebarState,
 	SortBy,
-} from '@renderer/types/sidebar'
+} from '@renderer/types'
 
 import { TitleCell } from './TitleCell'
 
