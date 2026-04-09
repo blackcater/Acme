@@ -6,8 +6,9 @@ import {
 	type PanelSize,
 } from 'react-resizable-panels'
 
-import { PanelRouter } from '../../components/chat/panel'
 import { useChatPanel } from '@renderer/hooks'
+
+import { PanelRouter } from '../../components/chat/panel'
 
 export interface ChatPageProps {
 	threadId?: string

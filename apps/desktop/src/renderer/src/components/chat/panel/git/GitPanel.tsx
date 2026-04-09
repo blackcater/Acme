@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 
 import { useGitStatus } from '@renderer/hooks'
+
 import { TabBar } from '../shared'
 import { ChangesSection } from './ChangesSection'
 import { CommitsSection } from './CommitsSection'

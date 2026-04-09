@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react'
 
-import type { UIMessage, OutlineNode as ONode } from '@renderer/types'
 import { useOutline } from '@renderer/hooks'
+import type { UIMessage, OutlineNode as ONode } from '@renderer/types'
+
 import { OutlinePanelHeader } from './OutlinePanelHeader'
 import { OutlineTree } from './OutlineTree'
 

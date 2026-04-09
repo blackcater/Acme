@@ -4,6 +4,7 @@ import { Folder01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 
 import type { OutlineNode as ONode } from '@renderer/types'
+
 import { OutlineNode } from './OutlineNode'
 
 interface OutlineTreeProps {

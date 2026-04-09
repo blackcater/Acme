@@ -1,4 +1,5 @@
 import type { PanelType, UIMessage } from '@renderer/types'
+
 import { BrowserWindowManagerPanel } from './browser/BrowserWindowManagerPanel'
 import { GitPanel } from './git/GitPanel'
 import { OutlinePanel } from './outline/OutlinePanel'
