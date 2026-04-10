@@ -11,6 +11,7 @@ import type { ReasoningPart } from '@/shared/types'
 
 interface ReasoningPartProps {
 	part: ReasoningPart
+	defaultExpanded?: boolean
 }
 
 // Chevron icon for expand/collapse
@@ -23,8 +24,11 @@ function ChevronIcon({ isExpanded }: { isExpanded: boolean }) {
 	)
 }
 
-export function ReasoningPart({ part }: ReasoningPartProps) {
-	const [isExpanded, setIsExpanded] = useState(false)
+export function ReasoningPart({
+	part,
+	defaultExpanded = false,
+}: ReasoningPartProps) {
+	const [isExpanded, setIsExpanded] = useState(defaultExpanded)
 
 	// Truncate reasoning for summary view
 	const maxSummaryLength = 150
