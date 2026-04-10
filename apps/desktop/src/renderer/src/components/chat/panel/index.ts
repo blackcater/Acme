@@ -20,3 +20,10 @@ export { InputBar } from './InputBar'
 export { ThinkingIndicator } from './ThinkingIndicator'
 export { DiffView } from './DiffView'
 export { PermissionDialog } from './PermissionDialog'
+
+// Part Components
+export { TextPart } from './TextPart'
+export { ToolCard } from './ToolCard'
+export { ContextToolGroup } from './ContextToolGroup'
+export { ReasoningPart } from './ReasoningPart'
+export { CompactionPart } from './CompactionPart'
