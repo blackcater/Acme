@@ -6,38 +6,16 @@ import {
 	ArrowUp01Icon,
 	CheckmarkCircle02Icon,
 	TimeIcon,
+	AlertCircleIcon,
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 
-import type { ToolUsePart, ToolResultPart } from '@/shared/types'
-
-// Error icon SVG (since ErrorWarningCircleIcon may not be available)
-function ErrorIcon({ className }: { className?: string }) {
-	return (
-		<svg
-			xmlns="http://www.w3.org/2000/svg"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			strokeWidth="2"
-			strokeLinecap="round"
-			strokeLinejoin="round"
-			className={className}
-		>
-			<circle cx="12" cy="12" r="10" />
-			<line x1="12" y1="8" x2="12" y2="12" />
-			<line x1="12" y1="16" x2="12.01" y2="16" />
-		</svg>
-	)
-}
+import type { ToolPart } from '@/shared/types'
 
 interface ToolCardProps {
-	tool: ToolUsePart
-	result?: ToolResultPart | undefined
-	status?: 'pending' | 'running' | 'completed' | 'error'
+	part: ToolPart
 }
 
-// Chevron icon for expand/collapse
 function ChevronIcon({ isExpanded }: { isExpanded: boolean }) {
 	return (
 		<HugeiconsIcon
@@ -47,8 +25,7 @@ function ChevronIcon({ isExpanded }: { isExpanded: boolean }) {
 	)
 }
 
-// Status indicator dot
-function StatusDot({ status }: { status: ToolCardProps['status'] }) {
+function StatusDot({ status }: { status: ToolPart['status'] }) {
 	const colors = {
 		pending: 'bg-yellow-500',
 		running: 'bg-blue-500 animate-pulse',
@@ -58,17 +35,13 @@ function StatusDot({ status }: { status: ToolCardProps['status'] }) {
 
 	return (
 		<span
-			className={`h-2 w-2 rounded-full ${colors[status || 'pending']}`}
-			title={status || 'pending'}
+			className={`h-2 w-2 rounded-full ${colors[status]}`}
+			title={status}
 		/>
 	)
 }
 
-export function ToolCard({
-	tool,
-	result,
-	status = 'completed',
-}: ToolCardProps) {
+export function ToolCard({ part }: ToolCardProps) {
 	const [isExpanded, setIsExpanded] = useState(false)
 
 	const formatJson = (obj: Record<string, unknown>) => {
@@ -88,9 +61,9 @@ export function ToolCard({
 					className="text-muted-foreground h-4 w-4 shrink-0"
 				/>
 				<span className="font-mono text-xs font-medium">
-					{tool.name}
+					{part.tool}
 				</span>
-				<StatusDot status={status} />
+				<StatusDot status={part.status} />
 				<span className="flex-1" />
 				<ChevronIcon isExpanded={isExpanded} />
 			</button>
@@ -104,31 +77,36 @@ export function ToolCard({
 							Input
 						</span>
 						<pre className="bg-background overflow-auto rounded-md px-3 py-2 font-mono text-xs">
-							<code>{formatJson(tool.input)}</code>
+							<code>{formatJson(part.input)}</code>
 						</pre>
 					</div>
 
 					{/* Output or Error */}
-					{result && (
+					{part.output && (
 						<div className="flex flex-col gap-1">
 							<span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
-								{status === 'error' ? 'Error' : 'Output'}
+								Output
 							</span>
-							<pre
-								className={`overflow-auto rounded-md px-3 py-2 font-mono text-xs ${
-									status === 'error'
-										? 'bg-red-500/10 text-red-600 dark:text-red-400'
-										: 'bg-background'
-								}`}
-							>
-								<code>{result.content}</code>
+							<pre className="bg-background overflow-auto rounded-md px-3 py-2 font-mono text-xs">
+								<code>{part.output}</code>
+							</pre>
+						</div>
+					)}
+
+					{part.error && (
+						<div className="flex flex-col gap-1">
+							<span className="text-muted-foreground text-xs font-medium tracking-wider uppercase">
+								Error
+							</span>
+							<pre className="overflow-auto rounded-md bg-red-500/10 px-3 py-2 font-mono text-xs text-red-600 dark:text-red-400">
+								<code>{part.error}</code>
 							</pre>
 						</div>
 					)}
 
 					{/* Status badge */}
 					<div className="flex items-center gap-1.5 text-xs">
-						{status === 'completed' && (
+						{part.status === 'completed' && (
 							<>
 								<HugeiconsIcon
 									icon={CheckmarkCircle02Icon}
@@ -139,15 +117,18 @@ export function ToolCard({
 								</span>
 							</>
 						)}
-						{status === 'error' && (
+						{part.status === 'error' && (
 							<>
-								<ErrorIcon className="h-3.5 w-3.5 text-red-500" />
+								<HugeiconsIcon
+									icon={AlertCircleIcon}
+									className="h-3.5 w-3.5 text-red-500"
+								/>
 								<span className="text-red-600 dark:text-red-400">
 									Error
 								</span>
 							</>
 						)}
-						{status === 'pending' && (
+						{part.status === 'pending' && (
 							<>
 								<HugeiconsIcon
 									icon={TimeIcon}
@@ -158,7 +139,7 @@ export function ToolCard({
 								</span>
 							</>
 						)}
-						{status === 'running' && (
+						{part.status === 'running' && (
 							<>
 								<span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
 								<span className="text-blue-600 dark:text-blue-400">

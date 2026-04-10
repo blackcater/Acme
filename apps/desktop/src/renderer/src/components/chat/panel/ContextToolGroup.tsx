@@ -1,46 +1,22 @@
 import { TextIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 
-import type { Part, ToolUsePart, ToolResultPart } from '@/shared/types'
+import type { ToolPart } from '@/shared/types'
 
 import { ToolCard } from './ToolCard'
 
 interface ContextToolGroupProps {
-	tools: Part[]
+	tools: ToolPart[]
 }
 
 // Context tool names that should be grouped together
 const CONTEXT_TOOL_NAMES = ['read', 'glob', 'grep', 'websearch', 'webfetch']
 
-interface GroupedTool {
-	tool: ToolUsePart
-	result: ToolResultPart | undefined
-}
-
-function groupContextTools(parts: Part[]): GroupedTool[] {
-	const toolUseParts = parts.filter(
-		(p): p is ToolUsePart => p.type === 'tool_use'
-	)
-	const toolResultParts = parts.filter(
-		(p): p is ToolResultPart => p.type === 'tool_result'
-	)
-
-	const contextTools: GroupedTool[] = []
-
-	for (const tool of toolUseParts) {
-		if (CONTEXT_TOOL_NAMES.includes(tool.name.toLowerCase())) {
-			const result = toolResultParts.find(
-				(r) => r.tool_use_id === tool.id
-			)
-			contextTools.push({ tool, result })
-		}
-	}
-
-	return contextTools
-}
-
 export function ContextToolGroup({ tools }: ContextToolGroupProps) {
-	const contextTools = groupContextTools(tools)
+	// Filter to only context tools
+	const contextTools = tools.filter((tool) =>
+		CONTEXT_TOOL_NAMES.includes(tool.tool.toLowerCase())
+	)
 
 	if (contextTools.length === 0) return null
 
@@ -51,13 +27,8 @@ export function ContextToolGroup({ tools }: ContextToolGroupProps) {
 				<span>Gathered context: {contextTools.length} tools</span>
 			</div>
 			<div className="flex flex-col gap-2">
-				{contextTools.map(({ tool, result }) => (
-					<ToolCard
-						key={tool.id}
-						tool={tool}
-						result={result}
-						status={result ? 'completed' : 'pending'}
-					/>
+				{contextTools.map((tool) => (
+					<ToolCard key={tool.toolCallId} part={tool} />
 				))}
 			</div>
 		</div>

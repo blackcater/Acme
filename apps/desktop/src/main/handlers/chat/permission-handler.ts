@@ -1,5 +1,6 @@
 import { Container } from '@/shared/di'
 import { ElectronRpcServer } from '@/shared/rpc/electron'
+
 import type { EngineInstance } from './chat-handler'
 import { sharedEngines } from './chat-handler'
 
@@ -30,9 +31,14 @@ export class PermissionHandler {
 		approved: boolean,
 		alwaysPattern?: string
 	): Promise<void> {
-		const instance: EngineInstance | undefined = sharedEngines.get(sessionId)
+		const instance: EngineInstance | undefined =
+			sharedEngines.get(sessionId)
 		if (instance) {
-			await instance.engine.respondPermission(requestId, approved, alwaysPattern)
+			await instance.engine.respondPermission(
+				requestId,
+				approved,
+				alwaysPattern
+			)
 		}
 	}
 }

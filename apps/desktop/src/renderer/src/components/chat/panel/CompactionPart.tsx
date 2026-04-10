@@ -8,7 +8,7 @@ interface CompactionPartProps {
 }
 
 export function CompactionPart({ part }: CompactionPartProps) {
-	const message = part.summary || 'Context compacted'
+	const message = part.message || 'Context compacted'
 
 	return (
 		<div className="flex items-center gap-3 py-2">

@@ -1,19 +1,21 @@
 import { useChatSession } from '@renderer/hooks/useChatSession'
-import { SessionItem } from './SessionItem'
+
 import { NewSessionButton } from './NewSessionButton'
+import { SessionItem } from './SessionItem'
 
 /**
  * Session list container for the chat sidebar
  */
 export function SessionList() {
-	const { sessionIds, activeId, switchSession, deleteSession } = useChatSession()
+	const { sessionIds, activeId, switchSession, deleteSession } =
+		useChatSession()
 
 	return (
 		<div className="flex flex-col gap-2 p-2">
 			<NewSessionButton />
 
 			{sessionIds.length === 0 ? (
-				<p className="px-3 py-4 text-center text-sm text-muted-foreground">
+				<p className="text-muted-foreground px-3 py-4 text-center text-sm">
 					No sessions yet
 				</p>
 			) : (

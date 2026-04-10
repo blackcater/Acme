@@ -1,7 +1,14 @@
 import { Container } from '@/shared/di'
-import { ElectronRpcServer } from '@/shared/rpc/electron'
 import type { Rpc } from '@/shared/rpc'
-import type { Session, SessionSummary, Turn, EngineConfig, EngineType } from '@/shared/types'
+import { ElectronRpcServer } from '@/shared/rpc/electron'
+import type {
+	Session,
+	SessionSummary,
+	Turn,
+	EngineConfig,
+	EngineType,
+} from '@/shared/types'
+
 import type { EngineBridge, EngineEvent } from '../engines'
 import { engineRegistry } from '../engines'
 import type { SessionStore } from '../session-store'
@@ -33,16 +40,22 @@ export class ChatHandler {
 			(engineType: string, engineConfig: Record<string, unknown>) =>
 				this.createSession(engineType, engineConfig)
 		)
-		router.handle('session/list', (filter?: { engineType?: EngineType; status?: string }) =>
-			this.listSessions(filter)
+		router.handle(
+			'session/list',
+			(filter?: { engineType?: EngineType; status?: string }) =>
+				this.listSessions(filter)
 		)
 		router.handle('session/get', (id: string) => this.getSession(id))
 		router.handle('session/delete', (id: string) => this.deleteSession(id))
 		router.handle('session/fork', (baseId: string, fromTurnId?: string) =>
 			this.forkSession(baseId, fromTurnId)
 		)
-		router.handle('session/archive', (id: string) => this.archiveSession(id))
-		router.handle('session/resume', (sessionId: string) => this.resumeSession(sessionId))
+		router.handle('session/archive', (id: string) =>
+			this.archiveSession(id)
+		)
+		router.handle('session/resume', (sessionId: string) =>
+			this.resumeSession(sessionId)
+		)
 		router.handle('session/rollback', (id: string, turnCount: number) =>
 			this.rollbackSession(id, turnCount)
 		)
@@ -51,9 +64,12 @@ export class ChatHandler {
 		router.handle(
 			'send',
 			{ schema: sendMessageSchema },
-			(sessionId: string, input: string) => this.sendMessage(sessionId, input)
+			(sessionId: string, input: string) =>
+				this.sendMessage(sessionId, input)
 		)
-		router.handle('interrupt', (sessionId: string) => this.interrupt(sessionId))
+		router.handle('interrupt', (sessionId: string) =>
+			this.interrupt(sessionId)
+		)
 	}
 
 	private async createSession(
@@ -67,7 +83,6 @@ export class ChatHandler {
 
 		const engine = new EngineClass()
 		const config: EngineConfig = {
-			engine: engineType as EngineType,
 			...engineConfig,
 		}
 
@@ -75,11 +90,15 @@ export class ChatHandler {
 		const engineSessionId = await engine.createSession(config)
 
 		// Register event listener
-		const cancelFn = engine.onEvent((event) => this.#handleEngineEvent(event))
+		const cancelFn = engine.onEvent((event) =>
+			this.#handleEngineEvent(event)
+		)
 
 		const session = await this.#sessionStore.create({
-			engine: engineType as EngineType,
-			config,
+			engineType: engineType as EngineType,
+			engineConfig: config,
+			status: 'active',
+			turns: [],
 		})
 
 		sharedEngines.set(session.id, { engine, sessionId: engineSessionId })
@@ -88,9 +107,10 @@ export class ChatHandler {
 		return session
 	}
 
-	async listSessions(
-		filter?: { engineType?: EngineType; status?: string }
-	): Promise<SessionSummary[]> {
+	async listSessions(filter?: {
+		engineType?: EngineType
+		status?: string
+	}): Promise<SessionSummary[]> {
 		return this.#sessionStore.list(filter)
 	}
 
@@ -129,16 +149,18 @@ export class ChatHandler {
 			throw new Error(`Session not found: ${sessionId}`)
 		}
 
-		const EngineClass = engineRegistry.get(session.engine)
+		const EngineClass = engineRegistry.get(session.engineType)
 		if (!EngineClass) {
-			throw new Error(`Unknown engine: ${session.engine}`)
+			throw new Error(`Unknown engine: ${session.engineType}`)
 		}
 
 		const engine = new EngineClass()
-		await engine.initialize(session.config)
-		const engineSessionId = await engine.createSession(session.config)
+		await engine.initialize(session.engineConfig)
+		const engineSessionId = await engine.createSession(session.engineConfig)
 
-		const cancelFn = engine.onEvent((event) => this.#handleEngineEvent(event))
+		const cancelFn = engine.onEvent((event) =>
+			this.#handleEngineEvent(event)
+		)
 
 		sharedEngines.set(sessionId, { engine, sessionId: engineSessionId })
 		this.#cancelFns.set(sessionId, cancelFn)
@@ -159,14 +181,14 @@ export class ChatHandler {
 		// Create a new turn
 		const turn: Turn = {
 			id: crypto.randomUUID(),
-			messages: [
-				{
-					id: crypto.randomUUID(),
-					role: 'user',
-					parts: [{ type: 'text', text: input }],
-				},
-			],
-			created_at: Date.now(),
+			userMessage: {
+				id: crypto.randomUUID(),
+				role: 'user',
+				parts: [{ type: 'text', text: input }],
+				timestamp: Date.now(),
+			},
+			assistantParts: [],
+			status: 'in_progress',
 		}
 
 		await this.#sessionStore.addTurn(sessionId, turn)
@@ -187,19 +209,44 @@ export class ChatHandler {
 
 		switch (event.type) {
 			case 'status_change':
-				this.#rpcServer.push('chat/status', target, event.sessionId, event.data)
+				this.#rpcServer.push(
+					'chat/status',
+					target,
+					event.sessionId,
+					event.data
+				)
 				break
 			case 'delta':
-				this.#rpcServer.push('chat/delta', target, event.sessionId, event.data)
+				this.#rpcServer.push(
+					'chat/delta',
+					target,
+					event.sessionId,
+					event.data
+				)
 				break
 			case 'permission_request':
-				this.#rpcServer.push('chat/permission', target, event.sessionId, event.data)
+				this.#rpcServer.push(
+					'chat/permission',
+					target,
+					event.sessionId,
+					event.data
+				)
 				break
 			case 'turn_complete':
-				this.#rpcServer.push('chat/turn_complete', target, event.sessionId, event.data)
+				this.#rpcServer.push(
+					'chat/turn_complete',
+					target,
+					event.sessionId,
+					event.data
+				)
 				break
 			case 'error':
-				this.#rpcServer.push('chat/error', target, event.sessionId, event.data)
+				this.#rpcServer.push(
+					'chat/error',
+					target,
+					event.sessionId,
+					event.data
+				)
 				break
 		}
 	}

@@ -1,8 +1,9 @@
-import { useAtomValue } from 'jotai'
-import { HugeiconsIcon } from '@hugeicons/react'
 import { Delete01Icon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
+import { useAtomValue } from 'jotai'
+
+import type { Session, Part } from '@/shared/types'
 import { chatSessionAtomFamily } from '@renderer/atoms'
-import type { Session, Turn, Part } from '@/shared/types'
 
 interface SessionItemProps {
 	sessionId: string
@@ -12,30 +13,17 @@ interface SessionItemProps {
 }
 
 /**
- * Extended Session type with turns - matches runtime behavior
- */
-interface SessionWithTurns extends Session {
-	turns: Turn[]
-	title?: string
-}
-
-/**
  * Get preview text from the first user message in a session
  */
 function getPreviewFromSession(session: Session | null): string | null {
-	const extSession = session as SessionWithTurns | null
-	if (!extSession?.turns?.length) return null
+	if (!session?.turns?.length) return null
 
-	for (const turn of extSession.turns) {
-		for (const message of turn.messages) {
-			if (message.role === 'user') {
-				// Find the first text part
-				const textPart = message.parts.find((p: Part) => p.type === 'text')
-				if (textPart && 'text' in textPart) {
-					return textPart.text.slice(0, 100)
-				}
-			}
-		}
+	const firstTurn = session.turns[0]
+	const textPart = firstTurn.userMessage.parts.find(
+		(p: Part) => p.type === 'text'
+	)
+	if (textPart && 'text' in textPart) {
+		return textPart.text.slice(0, 100)
 	}
 	return null
 }
@@ -44,14 +32,18 @@ function getPreviewFromSession(session: Session | null): string | null {
  * Get session title or "Untitled" if no title exists
  */
 function getSessionTitle(session: Session | null): string {
-	const extSession = session as SessionWithTurns | null
-	if (extSession?.title) {
-		return extSession.title
+	if (session?.name) {
+		return session.name
 	}
 	return 'Untitled'
 }
 
-export function SessionItem({ sessionId, isActive, onClick, onDelete }: SessionItemProps) {
+export function SessionItem({
+	sessionId,
+	isActive,
+	onClick,
+	onDelete,
+}: SessionItemProps) {
 	const session = useAtomValue(chatSessionAtomFamily(sessionId))
 	const title = getSessionTitle(session)
 	const preview = getPreviewFromSession(session)
@@ -69,19 +61,23 @@ export function SessionItem({ sessionId, isActive, onClick, onDelete }: SessionI
 			tabIndex={0}
 		>
 			<div className="flex items-center justify-between">
-				<span className="truncate font-medium text-sm">{title}</span>
+				<span className="truncate text-sm font-medium">{title}</span>
 				<button
 					onClick={(e) => {
 						e.stopPropagation()
 						onDelete()
 					}}
-					className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:text-destructive"
+					className="hover:text-destructive p-1 opacity-0 transition-opacity group-hover:opacity-100"
 					aria-label="Delete session"
 				>
 					<HugeiconsIcon icon={Delete01Icon} size={14} />
 				</button>
 			</div>
-			{preview && <p className="truncate text-xs text-muted-foreground">{preview}</p>}
+			{preview && (
+				<p className="text-muted-foreground truncate text-xs">
+					{preview}
+				</p>
+			)}
 		</div>
 	)
 }

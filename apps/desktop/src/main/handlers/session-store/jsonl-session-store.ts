@@ -1,23 +1,13 @@
 import { randomUUID } from 'node:crypto'
 import fs from 'node:fs/promises'
-import path from 'node:path'
 import os from 'node:os'
+import path from 'node:path'
 
 import type { Session, SessionSummary, Turn, EngineType } from '@/shared/types'
 
 import type { SessionStore } from './session-store'
 
 const SESSIONS_DIR = path.join(os.homedir(), '.acme', 'sessions')
-
-interface SessionMeta {
-	id: string
-	engine: EngineType
-	config: Session['config']
-	title?: string
-	created_at: number
-	updated_at: number
-	archived?: boolean
-}
 
 export class JsonlSessionStore implements SessionStore {
 	async #ensureSessionDir(sessionId: string): Promise<string> {
@@ -34,17 +24,17 @@ export class JsonlSessionStore implements SessionStore {
 		return path.join(SESSIONS_DIR, sessionId, 'turns.jsonl')
 	}
 
-	async #readMeta(sessionId: string): Promise<SessionMeta | null> {
+	async #readMeta(sessionId: string): Promise<Session | null> {
 		const metaPath = this.#getMetaPath(sessionId)
 		try {
 			const content = await fs.readFile(metaPath, 'utf-8')
-			return JSON.parse(content) as SessionMeta
+			return JSON.parse(content) as Session
 		} catch {
 			return null
 		}
 	}
 
-	async #writeMeta(sessionId: string, meta: SessionMeta): Promise<void> {
+	async #writeMeta(sessionId: string, meta: Session): Promise<void> {
 		const metaPath = this.#getMetaPath(sessionId)
 		await this.#ensureSessionDir(sessionId)
 		await fs.writeFile(metaPath, JSON.stringify(meta, null, 2), 'utf-8')
@@ -71,13 +61,16 @@ export class JsonlSessionStore implements SessionStore {
 
 	async #writeTurns(sessionId: string, turns: Turn[]): Promise<void> {
 		const turnsPath = this.#getTurnsPath(sessionId)
-		const content = turns.map((turn) => JSON.stringify(turn)).join('\n') + '\n'
+		const content =
+			turns.map((turn) => JSON.stringify(turn)).join('\n') + '\n'
 		await fs.writeFile(turnsPath, content, 'utf-8')
 	}
 
 	async #listSessionIds(): Promise<string[]> {
 		try {
-			const entries = await fs.readdir(SESSIONS_DIR, { withFileTypes: true })
+			const entries = await fs.readdir(SESSIONS_DIR, {
+				withFileTypes: true,
+			})
 			return entries
 				.filter((entry) => entry.isDirectory())
 				.map((entry) => entry.name)
@@ -87,24 +80,19 @@ export class JsonlSessionStore implements SessionStore {
 	}
 
 	async create(
-		session: Omit<Session, 'id' | 'created_at' | 'updated_at'>
+		session: Omit<Session, 'id' | 'createdAt' | 'updatedAt'>
 	): Promise<Session> {
 		const id = randomUUID()
 		const now = Date.now()
-		const meta: SessionMeta = {
-			id,
-			engine: session['engine'],
-			config: session['config'],
-			created_at: now,
-			updated_at: now,
-		}
-		await this.#writeMeta(id, meta)
-
 		const fullSession: Session = {
-			...meta,
-			created_at: now,
-			updated_at: now,
+			...session,
+			id,
+			createdAt: now,
+			updatedAt: now,
+			turns: [],
 		}
+		await this.#writeMeta(id, fullSession)
+		await this.#writeTurns(id, [])
 		return fullSession
 	}
 
@@ -112,18 +100,17 @@ export class JsonlSessionStore implements SessionStore {
 		const meta = await this.#readMeta(id)
 		if (!meta) return null
 
+		const turns = await this.#readTurns(id)
 		return {
-			id: meta.id,
-			engine: meta.engine,
-			config: meta.config,
-			created_at: meta.created_at,
-			updated_at: meta.updated_at,
+			...meta,
+			turns,
 		}
 	}
 
-	async list(
-		filter?: { engineType?: EngineType; status?: string }
-	): Promise<SessionSummary[]> {
+	async list(filter?: {
+		engineType?: EngineType
+		status?: string
+	}): Promise<SessionSummary[]> {
 		const sessionIds = await this.#listSessionIds()
 		const summaries: SessionSummary[] = []
 
@@ -132,27 +119,32 @@ export class JsonlSessionStore implements SessionStore {
 			if (!meta) continue
 
 			// Apply filters
-			if (filter?.engineType && meta.engine !== filter.engineType) continue
-			if (filter?.status === 'archived' && !meta.archived) continue
-			if (filter?.status === 'active' && meta.archived) continue
+			if (filter?.engineType && meta.engineType !== filter.engineType)
+				continue
+			if (filter?.status && meta.status !== filter.status) continue
 
 			const turns = await this.#readTurns(id)
+			const previewText =
+				turns[0]?.userMessage?.parts[0]?.type === 'text'
+					? (
+							turns[0].userMessage.parts[0] as { text: string }
+						).text.slice(0, 50)
+					: undefined
 			const summary: SessionSummary = {
 				id: meta.id,
-				engine: meta.engine,
-				...(meta.title !== undefined && { title: meta.title }),
-				message_count: turns.reduce(
-					(acc, turn) => acc + turn.messages.length,
-					0
-				),
-				created_at: meta.created_at,
-				updated_at: meta.updated_at,
+				...(meta.name !== undefined && { name: meta.name }),
+				engineType: meta.engineType,
+				status: meta.status,
+				turnCount: turns.length,
+				createdAt: meta.createdAt,
+				updatedAt: meta.updatedAt,
+				...(previewText !== undefined && { preview: previewText }),
 			}
 			summaries.push(summary)
 		}
 
-		// Sort by updated_at descending
-		summaries.sort((a, b) => b.updated_at - a.updated_at)
+		// Sort by updatedAt descending
+		summaries.sort((a, b) => b.updatedAt - a.updatedAt)
 		return summaries
 	}
 
@@ -160,12 +152,12 @@ export class JsonlSessionStore implements SessionStore {
 		const meta = await this.#readMeta(id)
 		if (!meta) return
 
-		const updatedMeta: SessionMeta = {
+		const updatedMeta: Session = {
 			...meta,
 			...patch,
 			id: meta.id, // Prevent id override
-			created_at: meta.created_at, // Prevent created_at override
-			updated_at: Date.now(),
+			createdAt: meta.createdAt, // Prevent createdAt override
+			updatedAt: Date.now(),
 		}
 		await this.#writeMeta(id, updatedMeta)
 	}
@@ -176,49 +168,36 @@ export class JsonlSessionStore implements SessionStore {
 	}
 
 	async fork(baseId: string, fromTurnId?: string): Promise<Session> {
-		const baseMeta = await this.#readMeta(baseId)
-		if (!baseMeta) {
+		const base = await this.get(baseId)
+		if (!base) {
 			throw new Error(`Base session ${baseId} not found`)
 		}
-
-		const baseTurns = await this.#readTurns(baseId)
 
 		// Find the turn index to fork from
 		let forkIndex = 0
 		if (fromTurnId) {
-			const idx = baseTurns.findIndex((t) => t.id === fromTurnId)
+			const idx = base.turns.findIndex((t) => t.id === fromTurnId)
 			if (idx !== -1) forkIndex = idx + 1
 		}
 
-		// Create new session
+		// Create new session with forked turns
 		const newSession = await this.create({
-			engine: baseMeta.engine,
-			config: baseMeta.config,
+			engineType: base.engineType,
+			engineConfig: base.engineConfig,
+			status: 'active',
+			...(base.name !== undefined && { name: `${base.name} (fork)` }),
+			turns: base.turns.slice(0, forkIndex),
 		})
-
-		// Copy turns up to fork point
-		const turnsToFork = baseTurns.slice(0, forkIndex)
-		for (const turn of turnsToFork) {
-			await this.addTurn(newSession.id, turn)
-		}
 
 		return newSession
 	}
 
 	async archive(id: string): Promise<void> {
-		const meta = await this.#readMeta(id)
-		if (!meta) return
-		meta.archived = true
-		meta.updated_at = Date.now()
-		await this.#writeMeta(id, meta)
+		await this.update(id, { status: 'archived' })
 	}
 
 	async unarchive(id: string): Promise<void> {
-		const meta = await this.#readMeta(id)
-		if (!meta) return
-		meta.archived = false
-		meta.updated_at = Date.now()
-		await this.#writeMeta(id, meta)
+		await this.update(id, { status: 'active' })
 	}
 
 	async rollback(id: string, turnCount: number): Promise<void> {
@@ -228,22 +207,12 @@ export class JsonlSessionStore implements SessionStore {
 		}
 		const newTurns = turns.slice(0, turns.length - turnCount)
 		await this.#writeTurns(id, newTurns)
-
-		const meta = await this.#readMeta(id)
-		if (meta) {
-			meta.updated_at = Date.now()
-			await this.#writeMeta(id, meta)
-		}
+		await this.update(id, {})
 	}
 
 	async addTurn(sessionId: string, turn: Turn): Promise<void> {
 		await this.#appendTurn(sessionId, turn)
-
-		const meta = await this.#readMeta(sessionId)
-		if (meta) {
-			meta.updated_at = Date.now()
-			await this.#writeMeta(sessionId, meta)
-		}
+		await this.update(sessionId, {})
 	}
 
 	async updateTurn(
@@ -257,12 +226,7 @@ export class JsonlSessionStore implements SessionStore {
 
 		turns[index] = { ...turns[index], ...patch }
 		await this.#writeTurns(sessionId, turns)
-
-		const meta = await this.#readMeta(sessionId)
-		if (meta) {
-			meta.updated_at = Date.now()
-			await this.#writeMeta(sessionId, meta)
-		}
+		await this.update(sessionId, {})
 	}
 
 	async getTurn(sessionId: string, turnId: string): Promise<Turn | null> {

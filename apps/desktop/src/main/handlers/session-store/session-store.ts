@@ -2,9 +2,14 @@ import type { Session, SessionSummary, Turn, EngineType } from '@/shared/types'
 
 export interface SessionStore {
 	// CRUD
-	create(session: Omit<Session, 'id' | 'created_at' | 'updated_at'>): Promise<Session>
+	create(
+		session: Omit<Session, 'id' | 'createdAt' | 'updatedAt'>
+	): Promise<Session>
 	get(id: string): Promise<Session | null>
-	list(filter?: { engineType?: EngineType; status?: string }): Promise<SessionSummary[]>
+	list(filter?: {
+		engineType?: EngineType
+		status?: string
+	}): Promise<SessionSummary[]>
 	update(id: string, patch: Partial<Session>): Promise<void>
 	delete(id: string): Promise<void>
 
@@ -16,6 +21,10 @@ export interface SessionStore {
 
 	// Turn operations
 	addTurn(sessionId: string, turn: Turn): Promise<void>
-	updateTurn(sessionId: string, turnId: string, patch: Partial<Turn>): Promise<void>
+	updateTurn(
+		sessionId: string,
+		turnId: string,
+		patch: Partial<Turn>
+	): Promise<void>
 	getTurn(sessionId: string, turnId: string): Promise<Turn | null>
 }

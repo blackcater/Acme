@@ -1,7 +1,7 @@
 import { BrowserHandler } from './browser'
+import { registerChatHandlers } from './chat'
 import { FilesHandler } from './files'
 import { GitHandler } from './git'
-import { registerChatHandlers } from './chat'
 import { registerSystemHandlers } from './system'
 
 export function registerHandlers() {

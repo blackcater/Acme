@@ -3,7 +3,6 @@ import { useCallback, useEffect } from 'react'
 import { useAtom, useAtomValue, useSetAtom } from 'jotai'
 
 import type { Session, SessionSummary, Turn } from '@/shared/types'
-
 import {
 	chatSessionIdsAtom,
 	chatActiveSessionIdAtom,
@@ -20,8 +19,14 @@ import {
  */
 interface ChatApi {
 	session: {
-		create: (engineType: string, engineConfig?: Record<string, unknown>) => Promise<Session>
-		list: (filter?: { engineType?: string; status?: string }) => Promise<SessionSummary[]>
+		create: (
+			engineType: string,
+			engineConfig?: Record<string, unknown>
+		) => Promise<Session>
+		list: (filter?: {
+			engineType?: string
+			status?: string
+		}) => Promise<SessionSummary[]>
 		get: (id: string) => Promise<Session | null>
 		delete: (id: string) => Promise<void>
 		fork: (baseId: string, fromTurnId?: string) => Promise<Session>
@@ -53,7 +58,9 @@ export function useChatSession() {
 	const [activeId, setActiveId] = useAtom(chatActiveSessionIdAtom)
 	const activeSession = useAtomValue(chatActiveSessionAtom)
 	const [isProcessing, setIsProcessing] = useAtom(isProcessingAtom)
-	const [pendingPermission, setPendingPermission] = useAtom(pendingPermissionAtom)
+	const [pendingPermission, setPendingPermission] = useAtom(
+		pendingPermissionAtom
+	)
 
 	// Action atoms
 	const appendTurn = useSetAtom(appendTurnAtom)
@@ -82,7 +89,9 @@ export function useChatSession() {
 		}
 
 		const onPermission = (_sessionId: string, permission: unknown) => {
-			setPendingPermission(permission as Parameters<typeof setPendingPermission>[0])
+			setPendingPermission(
+				permission as Parameters<typeof setPendingPermission>[0]
+			)
 			setIsProcessing(true)
 		}
 
@@ -93,8 +102,14 @@ export function useChatSession() {
 
 		// Subscribe to events
 		const cancelDelta = window.api.rpc.onEvent('chat/delta', onDelta)
-		const cancelPermission = window.api.rpc.onEvent('chat/permission', onPermission)
-		const cancelTurnComplete = window.api.rpc.onEvent('chat/turn_complete', onTurnComplete)
+		const cancelPermission = window.api.rpc.onEvent(
+			'chat/permission',
+			onPermission
+		)
+		const cancelTurnComplete = window.api.rpc.onEvent(
+			'chat/turn_complete',
+			onTurnComplete
+		)
 
 		return () => {
 			cancelDelta()
@@ -106,7 +121,10 @@ export function useChatSession() {
 	// Actions
 	const createSession = useCallback(
 		async (engineType: string, engineConfig?: Record<string, unknown>) => {
-			const session = await chatApi.chat.session.create(engineType, engineConfig)
+			const session = await chatApi.chat.session.create(
+				engineType,
+				engineConfig
+			)
 			setSessionIds((prev) => [...prev, session.id])
 			setActiveId(session.id)
 			return session
@@ -155,9 +173,18 @@ export function useChatSession() {
 	}, [activeId, setIsProcessing])
 
 	const respondPermission = useCallback(
-		async (requestId: string, approved: boolean, alwaysPattern?: string) => {
+		async (
+			requestId: string,
+			approved: boolean,
+			alwaysPattern?: string
+		) => {
 			if (!activeId) return
-			await chatApi.chat.permission.respond(activeId, requestId, approved, alwaysPattern)
+			await chatApi.chat.permission.respond(
+				activeId,
+				requestId,
+				approved,
+				alwaysPattern
+			)
 			setPendingPermission(null)
 		},
 		[activeId, setPendingPermission]

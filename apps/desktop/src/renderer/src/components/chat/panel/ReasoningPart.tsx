@@ -32,10 +32,10 @@ export function ReasoningPart({
 
 	// Truncate reasoning for summary view
 	const maxSummaryLength = 150
-	const isLong = part.reasoning.length > maxSummaryLength
+	const isLong = part.text.length > maxSummaryLength
 	const summary = isLong
-		? part.reasoning.slice(0, maxSummaryLength) + '...'
-		: part.reasoning
+		? part.text.slice(0, maxSummaryLength) + '...'
+		: part.text
 
 	return (
 		<div className="bg-muted/30 overflow-hidden rounded-lg">
@@ -58,7 +58,7 @@ export function ReasoningPart({
 			{/* Content */}
 			<div className="px-3 pb-2">
 				<div className="text-muted-foreground text-xs whitespace-pre-wrap">
-					{isExpanded ? part.reasoning : summary}
+					{isExpanded ? part.text : summary}
 				</div>
 				{isLong && !isExpanded && (
 					<button

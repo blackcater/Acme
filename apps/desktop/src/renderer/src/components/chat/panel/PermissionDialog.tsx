@@ -12,15 +12,19 @@ export function PermissionDialog() {
 	if (!pendingPermission) return null
 
 	const handleApprove = () => {
-		respondPermission(pendingPermission.id, true)
+		respondPermission(pendingPermission.requestId, true)
 	}
 
 	const handleDeny = () => {
-		respondPermission(pendingPermission.id, false)
+		respondPermission(pendingPermission.requestId, false)
 	}
 
 	const handleAlwaysAllow = () => {
-		respondPermission(pendingPermission.id, true, pendingPermission.resource)
+		respondPermission(
+			pendingPermission.requestId,
+			true,
+			pendingPermission.alwaysPatterns[0]
+		)
 	}
 
 	return (
@@ -38,22 +42,39 @@ export function PermissionDialog() {
 							Permission Required
 						</h2>
 						<p className="text-muted-foreground text-sm">
-							{pendingPermission.type.replace('_', ' ')}
+							{pendingPermission.tool}
 						</p>
 					</div>
 				</div>
 
-				<div className="bg-muted/50 mb-4 rounded-lg p-3">
-					<p className="font-mono text-sm">
-						{pendingPermission.resource}
-					</p>
-				</div>
+				<div className="mb-4 space-y-3">
+					<div className="bg-muted/50 rounded-lg p-3">
+						<p className="text-muted-foreground mb-1 text-xs tracking-wider uppercase">
+							Parameters
+						</p>
+						<pre className="font-mono text-sm">
+							{JSON.stringify(pendingPermission.params, null, 2)}
+						</pre>
+					</div>
 
-				{pendingPermission.reason && (
-					<p className="text-muted-foreground mb-4 text-sm">
-						{pendingPermission.reason}
-					</p>
-				)}
+					{pendingPermission.patterns.length > 0 && (
+						<div className="bg-muted/50 rounded-lg p-3">
+							<p className="text-muted-foreground mb-1 text-xs tracking-wider uppercase">
+								Affected Patterns
+							</p>
+							<div className="flex flex-wrap gap-1">
+								{pendingPermission.patterns.map((pattern) => (
+									<span
+										key={pattern}
+										className="bg-muted rounded px-2 py-0.5 text-xs"
+									>
+										{pattern}
+									</span>
+								))}
+							</div>
+						</div>
+					)}
+				</div>
 
 				<div className="flex gap-3">
 					<button
@@ -70,7 +91,7 @@ export function PermissionDialog() {
 					</button>
 					<button
 						onClick={handleAlwaysAllow}
-						className="bg-emerald-600 text-white hover:bg-emerald-600/90 flex-1 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+						className="flex-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-600/90"
 					>
 						Always Allow
 					</button>
