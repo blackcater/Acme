@@ -1,4 +1,4 @@
-import { useChatSession } from '@renderer/hooks/useChatSession'
+import { useChatSession } from '@renderer/hooks'
 
 /**
  * Button to create a new chat session

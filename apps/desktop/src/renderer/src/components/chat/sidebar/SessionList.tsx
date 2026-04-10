@@ -1,4 +1,4 @@
-import { useChatSession } from '@renderer/hooks/useChatSession'
+import { useChatSession } from '@renderer/hooks'
 
 import { NewSessionButton } from './NewSessionButton'
 import { SessionItem } from './SessionItem'

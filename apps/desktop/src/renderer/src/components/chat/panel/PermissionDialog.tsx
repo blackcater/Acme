@@ -2,8 +2,8 @@ import { ShieldIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import { useAtomValue } from 'jotai'
 
-import { pendingPermissionAtom } from '@renderer/atoms/chat-atoms'
-import { useChatSession } from '@renderer/hooks/useChatSession'
+import { pendingPermissionAtom } from '@renderer/atoms'
+import { useChatSession } from '@renderer/hooks'
 
 export function PermissionDialog() {
 	const pendingPermission = useAtomValue(pendingPermissionAtom)
