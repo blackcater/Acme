@@ -3,15 +3,15 @@ import simpleGit, { type SimpleGit } from 'simple-git'
 import { Container } from '@/shared/di'
 import { ElectronRpcServer } from '@/shared/rpc/electron'
 
-import type { GitStatus, GitBranch, GitLogEntry } from './git.schema'
+import type { API } from '@/types/api'
 
-export class GitHandler {
-	private git(repoPath: string): SimpleGit {
+export class GitHandler implements API.GitAPI {
+	#get(repoPath: string): SimpleGit {
 		return simpleGit(repoPath)
 	}
 
-	async status(repoPath: string): Promise<GitStatus> {
-		const git = this.git(repoPath)
+	async status(repoPath: string): Promise<API.GitStatus> {
+		const git = this.#get(repoPath)
 		const result = await git.status()
 		return {
 			current: result.current,
@@ -23,8 +23,8 @@ export class GitHandler {
 		}
 	}
 
-	async branches(repoPath: string): Promise<GitBranch[]> {
-		const git = this.git(repoPath)
+	async branches(repoPath: string): Promise<API.GitBranch[]> {
+		const git = this.#get(repoPath)
 		const branchSummary = await git.branch()
 		return branchSummary.all.map((name) => ({
 			name,
@@ -33,13 +33,13 @@ export class GitHandler {
 	}
 
 	async currentBranch(repoPath: string): Promise<string> {
-		const git = this.git(repoPath)
+		const git = this.#get(repoPath)
 		const branchSummary = await git.branch()
 		return branchSummary.current
 	}
 
-	async log(repoPath: string, count = 50): Promise<GitLogEntry[]> {
-		const git = this.git(repoPath)
+	async log(repoPath: string, count = 50): Promise<API.GitLogEntry[]> {
+		const git = this.#get(repoPath)
 		const result = await git.log({
 			maxCount: count,
 			'--no-optional-locks': null,
@@ -56,7 +56,7 @@ export class GitHandler {
 	async diffStat(
 		repoPath: string
 	): Promise<{ additions: number; deletions: number }> {
-		const git = this.git(repoPath)
+		const git = this.#get(repoPath)
 		const result = await git.diff(['--stat'])
 		let additions = 0
 		let deletions = 0
@@ -71,32 +71,32 @@ export class GitHandler {
 	}
 
 	async stage(repoPath: string, files: string[]): Promise<void> {
-		const git = this.git(repoPath)
+		const git = this.#get(repoPath)
 		await git.add(files)
 	}
 
 	async unstage(repoPath: string, files: string[]): Promise<void> {
-		const git = this.git(repoPath)
+		const git = this.#get(repoPath)
 		await git.reset(['HEAD', '--', ...files])
 	}
 
 	async stageAll(repoPath: string): Promise<void> {
-		const git = this.git(repoPath)
+		const git = this.#get(repoPath)
 		await git.add('-A')
 	}
 
 	async unstageAll(repoPath: string): Promise<void> {
-		const git = this.git(repoPath)
+		const git = this.#get(repoPath)
 		await git.reset(['HEAD'])
 	}
 
 	async discard(repoPath: string, files: string[]): Promise<void> {
-		const git = this.git(repoPath)
+		const git = this.#get(repoPath)
 		await git.checkout(['--', ...files])
 	}
 
 	async commit(repoPath: string, message: string): Promise<{ hash: string }> {
-		const git = this.git(repoPath)
+		const git = this.#get(repoPath)
 		const result = await git.commit(message)
 		return { hash: result.commit }
 	}
@@ -105,7 +105,7 @@ export class GitHandler {
 		repoPath: string,
 		branch: string
 	): Promise<{ success: boolean }> {
-		const git = this.git(repoPath)
+		const git = this.#get(repoPath)
 		try {
 			await git.checkout(branch)
 			return { success: true }
@@ -115,14 +115,14 @@ export class GitHandler {
 	}
 
 	async createBranch(repoPath: string, name: string): Promise<void> {
-		const git = this.git(repoPath)
+		const git = this.#get(repoPath)
 		await git.checkoutLocalBranch(name)
 	}
 
 	async push(
 		repoPath: string
 	): Promise<{ success: boolean; message?: string }> {
-		const git = this.git(repoPath)
+		const git = this.#get(repoPath)
 		try {
 			const result = await git.push()
 			return { success: true, message: result.pushed.join(', ') }
@@ -134,7 +134,7 @@ export class GitHandler {
 	async pull(
 		repoPath: string
 	): Promise<{ success: boolean; message?: string }> {
-		const git = this.git(repoPath)
+		const git = this.#get(repoPath)
 		try {
 			await git.pull()
 			return { success: true }
@@ -144,7 +144,7 @@ export class GitHandler {
 	}
 
 	async fetch(repoPath: string): Promise<void> {
-		const git = this.git(repoPath)
+		const git = this.#get(repoPath)
 		await git.fetch(['--all', '--no-optional-locks'])
 	}
 
