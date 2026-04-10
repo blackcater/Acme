@@ -9,8 +9,8 @@ import {
 	SelectValue,
 } from '@acme-ai/ui/foundation'
 
-import { SettingsContent } from '../../components/settings/SettingsContent'
-import { SettingsSection } from '../../components/settings/SettingsSection'
+import { SettingsContent } from '@renderer/components/settings/SettingsContent'
+import { SettingsSection } from '@renderer/components/settings/SettingsSection'
 
 export function AppearancePage() {
 	const [theme, setTheme] = useState('system')

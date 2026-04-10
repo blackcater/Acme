@@ -8,7 +8,7 @@ import {
 
 import { useChatPanel } from '@renderer/hooks'
 
-import { PanelRouter } from '../../components/chat/panel'
+import { PanelRouter } from '@renderer/components/chat/panel'
 
 export interface ChatPageProps {
 	threadId?: string

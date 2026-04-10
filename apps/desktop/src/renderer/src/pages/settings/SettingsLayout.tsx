@@ -1,4 +1,4 @@
-import { SettingsNav } from '../../components/settings/SettingsNav'
+import { SettingsNav } from '@renderer/components/settings/SettingsNav'
 
 export interface SettingsLayoutProps {
 	children: React.ReactNode

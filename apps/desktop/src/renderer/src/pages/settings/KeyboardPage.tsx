@@ -1,5 +1,5 @@
-import { SettingsContent } from '../../components/settings/SettingsContent'
-import { SettingsSection } from '../../components/settings/SettingsSection'
+import { SettingsContent } from '@renderer/components/settings/SettingsContent'
+import { SettingsSection } from '@renderer/components/settings/SettingsSection'
 
 export function KeyboardPage() {
 	return (

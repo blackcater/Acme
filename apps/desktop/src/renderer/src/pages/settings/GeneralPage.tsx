@@ -2,8 +2,8 @@ import { useState } from 'react'
 
 import { Label, Switch } from '@acme-ai/ui/foundation'
 
-import { SettingsContent } from '../../components/settings/SettingsContent'
-import { SettingsSection } from '../../components/settings/SettingsSection'
+import { SettingsContent } from '@renderer/components/settings/SettingsContent'
+import { SettingsSection } from '@renderer/components/settings/SettingsSection'
 
 export function GeneralPage() {
 	const [preventSleep, setPreventSleep] = useState(false)
